@@ -1,8 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <JUCERPROJECT id="vb4d7A" name="straDellaMIDI_plugin" projectType="audioplug"
+              version="1.0.0" companyName="yourcompany" companyWebsite="www.yourcompany.com"
               useAppConfig="0" addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1"
-              pluginFormats="buildAU,buildVST3">
+              pluginFormats="buildAU,buildVST3"
+              pluginName="straDellaMIDI_plugin" pluginDesc="straDellaMIDI_plugin"
+              pluginManufacturer="yourcompany" pluginManufacturerCode="Manu"
+              pluginCode="Vb4d"
+              pluginIsSynth="0" pluginWantsMidiIn="0" pluginProducesMidiOut="0"
+              pluginIsMidiEffectPlugin="0" pluginEditorRequiresKeys="0"
+              pluginAUExportPrefix="straDellaMIDI_pluginAU" pluginAUMainType="aufx"
+              pluginVST3Category="Fx" bundleIdentifier="com.yourcompany.straDellaMIDI_plugin">
   <MAINGROUP id="chO3FN" name="straDellaMIDI_plugin">
     <GROUP id="{5E187DB7-58E1-AEA5-A7F8-0E52F2460308}" name="Source">
       <FILE id="tQRfx2" name="PluginProcessor.cpp" compile="1" resource="0"
@@ -33,7 +41,8 @@
   </MODULES>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
   <EXPORTFORMATS>
-    <XCODE_MAC targetFolder="Builds/MacOSX">
+    <XCODE_MAC targetFolder="Builds/MacOSX" bundleIdentifier="com.yourcompany.straDellaMIDI_plugin"
+              macOSDeploymentTarget="10.13">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="straDellaMIDI_plugin"/>
         <CONFIGURATION isDebug="0" name="Release" targetName="straDellaMIDI_plugin"/>

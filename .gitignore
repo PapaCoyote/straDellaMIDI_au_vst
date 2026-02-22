@@ -1,0 +1,25 @@
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Xcode build artefacts
+Builds/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcworkspace/xcuserdata/
+
+# Compiled binaries / libraries
+*.o
+*.a
+*.dylib
+*.so
+*.bundle
+*.component
+*.vst
+*.vst3
+
+# Projucer / IDE generated files (regenerated from .jucer by Projucer)
+# Uncomment the next line if you prefer not to commit JuceLibraryCode:
+# JuceLibraryCode/
