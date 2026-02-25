@@ -5,11 +5,11 @@
               useAppConfig="0" addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1"
               pluginFormats="buildAU,buildVST3" pluginName="straDellaMIDI_1.01"
               pluginDesc="straDellaMIDI_plugin" pluginManufacturer="Papa Coyote"
-              pluginManufacturerCode="Manu" pluginCode="Vb4d" pluginIsSynth="1"
-              pluginWantsMidiIn="0" pluginProducesMidiOut="1" pluginIsMidiEffectPlugin="1"
+              pluginManufacturerCode="Manu" pluginCode="Vb4d" pluginIsSynth="0"
+              pluginWantsMidiIn="1" pluginProducesMidiOut="1" pluginIsMidiEffectPlugin="1"
               pluginEditorRequiresKeys="0" pluginAUExportPrefix="straDellaMIDI_pluginAU"
-              pluginAUMainType="'aumf'" pluginVST3Category="Fx|MIDI,Instrument"
-              bundleIdentifier="net.papacoyote.straDellaMIDI_plugin" pluginCharacteristicsValue="pluginIsMidiEffectPlugin,pluginIsSynth,pluginProducesMidiOut"
+              pluginAUMainType="'aumf'" pluginVST3Category="Fx|MIDI"
+              bundleIdentifier="net.papacoyote.straDellaMIDI_plugin" pluginCharacteristicsValue="pluginIsMidiEffectPlugin,pluginProducesMidiOut,pluginWantsMidiIn"
               pluginAAXDisableBypass="0" pluginAAXDisableMultiMono="0" pluginAAXCategory="65536">
   <MAINGROUP id="chO3FN" name="straDellaMIDI">
     <GROUP id="{5E187DB7-58E1-AEA5-A7F8-0E52F2460308}" name="Source">

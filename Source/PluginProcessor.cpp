@@ -106,6 +106,13 @@ void StraDellaMIDI_pluginAudioProcessor::releaseResources()
 {
 }
 
+bool StraDellaMIDI_pluginAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
+{
+    // This is a MIDI-only effect: it must have no audio input or output buses.
+    return layouts.getMainInputChannelSet()  == juce::AudioChannelSet::disabled()
+        && layouts.getMainOutputChannelSet() == juce::AudioChannelSet::disabled();
+}
+
 void StraDellaMIDI_pluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
                                                        juce::MidiBuffer& midiMessages)
 {
