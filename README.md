@@ -38,50 +38,87 @@ Bass notes are voiced in octave 2; chord tones are voiced one octave higher.
 1. **JUCE** — download version **7.0.5 or later** from [juce.com](https://juce.com/get-juce/). JUCE 7.x is required.
 2. **Projucer** — included with JUCE. Used to generate the Xcode project from the `.jucer` file.
 3. **Xcode** — version 14 or later recommended (macOS only).
-4. **macOS** — 10.13 (High Sierra) or later (deployment target matches the `.jucer` settings).
+4. **macOS 11.0 (Big Sur) or later** — the AU format uses `kAudioUnitType_MIDIProcessor` (`aump`),
+   which requires macOS 11+. The VST3 format works on macOS 10.13+.
 
-## Build Instructions
+## Build Instructions — IMPORTANT: Projucer must be re-run first
+
+> **Every time you clone the repo or pull changes, you must open the `.jucer` in Projucer and save
+> it before building.** The `Builds/` directory (which contains the Xcode project) is not committed
+> to the repository. Projucer re-generates it from the `.jucer` file, writing the correct bundle
+> identifier, AU type, and other build settings into the Xcode project. Skipping this step means
+> the built plugin will have stale or incorrect metadata and Logic Pro will not recognise it.
 
 1. Install JUCE and note the path to the JUCE modules folder (e.g. `~/JUCE/modules`).
 2. Open `straDellaMIDI_plugin.jucer` in the Projucer.
-3. In the Projucer, set the **Global Paths** so that "Path to JUCE modules" points to your local JUCE modules directory.
-4. Save the project in Projucer — this generates `Builds/MacOSX/straDellaMIDI_plugin.xcodeproj`.
-5. Open the generated Xcode project and build the **AU** or **VST3** target (Debug or Release).
-6. The built `.component` (AU) and `.vst3` files will be placed in the appropriate plugin directories by Xcode.
+3. In the Projucer, set the **Global Paths** so that "Path to JUCE modules" points to your local
+   JUCE modules directory.
+4. **Save the project in Projucer** — this regenerates `Builds/MacOSX/straDellaMIDI_plugin.xcodeproj`
+   and `JuceLibraryCode/JucePluginDefines.h`.
+5. In Xcode: **Product → Clean Build Folder** (⌥⇧⌘K), then build the **AU** target in **Release**.
+6. Xcode copies the built `.component` into `~/Library/Audio/Plug-Ins/Components/` automatically.
 
 ## Using in Logic Pro
 
-This plugin is a **MIDI Processor** (`kAudioUnitType_MIDIProcessor`).  It appears in Logic Pro's
-**MIDI FX** slot — **not** in Audio FX or Instruments.
+This plugin is a **MIDI Processor** (`kAudioUnitType_MIDIProcessor`, `aump`). It appears in Logic
+Pro's **MIDI FX** slot — **not** in Audio FX or Instruments.
 
-### First-time setup / after reinstalling
+> **macOS 11+ is required** for the AU format. On macOS 10.15 or earlier the `aump` component type
+> is not supported and the plugin will not appear regardless of scanning or cache clearing.
 
-1. After a successful Release build, force Logic Pro to rescan the plugin:
-   * **Logic Pro → Plug-in Manager** (Logic Pro 10.7+)  
-     *or* **Logic Pro → Preferences → Plug-In Manager** (older versions)  
-   * Click **Reset & Rescan All** (or find the plugin in the list and click **Reset & Rescan**).
-   
-   If the plugin does not appear in the list at all, manually clear the AU cache first:
+### Step 1 — Verify the AU passes validation
 
-   ```bash
-   # Quit Logic Pro first, then run:
-   rm -rf ~/Library/Caches/AudioUnitCache
-   ```
+Before loading in Logic, confirm `auval` accepts the component:
 
-   Relaunch Logic Pro — it will perform a fresh scan of all components.
+```bash
+auval -v aump Vb4d Manu
+```
 
-### Loading the plugin
+A passing result ends with `* * PASS * *`. Any `FAIL` or error output identifies exactly what is
+wrong. Run this after each Xcode build to check the component before opening Logic.
 
-1. Create or select a **Software Instrument** track (or **External MIDI** track).
-2. Click the **MIDI FX** area in the channel strip (above the instrument slot).
+### Step 2 — Clear the AU cache and rescan
+
+Logic caches plugin validation results. After rebuilding you must clear the stale cache:
+
+```bash
+# Quit Logic Pro first, then:
+rm -rf ~/Library/Caches/AudioUnitCache
+rm -rf ~/Library/Caches/com.apple.audiounits.cache 2>/dev/null; true
+```
+
+Then re-open Logic Pro. It performs a fresh scan on startup and should now find the plugin.
+
+### Step 3 — Force a rescan inside Logic Pro
+
+If the plugin still does not appear after clearing the cache:
+
+* **Logic Pro → Plug-in Manager** (Logic Pro 10.7+)  
+  *or* **Logic Pro → Preferences → Plug-In Manager** (older versions)  
+* Locate **straDellaMIDI_1.01** in the list and click **Reset & Rescan Selection**.
+* If it does not appear in the list at all, click **Reset & Rescan All**.
+
+### Step 4 — Load the plugin
+
+1. Create or select a **Software Instrument** track.
+2. Click the **MIDI FX** slot in the channel strip (above the instrument plugin slot).
 3. Navigate to **Audio Units MIDI Effects → Papa Coyote → straDellaMIDI_1.01**.
 4. Open the plugin window — you will see the Stradella bass grid.
 5. Click any button to send MIDI notes to the instrument below it.
 
-> **Note:** Because this is a MIDI FX plugin, it will **not** appear under Audio FX, Instruments,
-> or in the instrument slot. If you do not see a MIDI FX slot on the channel strip, make sure you
-> are looking at a **Software Instrument** channel, and that the MIDI FX lane is visible
-> (click the triangular disclosure button on the channel strip if needed).
+> **Note:** The plugin appears under **MIDI FX**, not Audio FX or Instruments. If you do not see a
+> MIDI FX slot, make sure the channel strip belongs to a **Software Instrument** track and that the
+> MIDI FX lane is expanded (click the disclosure triangle on the channel strip if needed).
+
+### Gatekeeper / quarantine (if the .component was copied from another machine)
+
+Plugins downloaded or copied from another Mac may be quarantined by macOS Gatekeeper and silently
+blocked. Remove the quarantine flag before scanning:
+
+```bash
+sudo xattr -rd com.apple.quarantine \
+  ~/Library/Audio/Plug-Ins/Components/straDellaMIDI_plugin.component
+```
 
 ## Plugin Metadata
 
