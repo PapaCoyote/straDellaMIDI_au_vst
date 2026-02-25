@@ -7,10 +7,10 @@
               pluginName="straDellaMIDI_plugin" pluginDesc="straDellaMIDI_plugin"
               pluginManufacturer="yourcompany" pluginManufacturerCode="Manu"
               pluginCode="Vb4d"
-              pluginIsSynth="0" pluginWantsMidiIn="0" pluginProducesMidiOut="0"
-              pluginIsMidiEffectPlugin="0" pluginEditorRequiresKeys="0"
-              pluginAUExportPrefix="straDellaMIDI_pluginAU" pluginAUMainType="aufx"
-              pluginVST3Category="Fx" bundleIdentifier="com.yourcompany.straDellaMIDI_plugin">
+              pluginIsSynth="0" pluginWantsMidiIn="1" pluginProducesMidiOut="1"
+              pluginIsMidiEffectPlugin="1" pluginEditorRequiresKeys="0"
+              pluginAUExportPrefix="straDellaMIDI_pluginAU" pluginAUMainType="aumf"
+              pluginVST3Category="Fx|MIDI" bundleIdentifier="com.yourcompany.straDellaMIDI_plugin">
   <MAINGROUP id="chO3FN" name="straDellaMIDI_plugin">
     <GROUP id="{5E187DB7-58E1-AEA5-A7F8-0E52F2460308}" name="Source">
       <FILE id="tQRfx2" name="PluginProcessor.cpp" compile="1" resource="0"

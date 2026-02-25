@@ -1,5 +1,29 @@
 # straDellaMIDI_au_vst
-Accordion stradella bass side emulator in AU and VST3 format
+Accordion Stradella Bass Side Emulator — AU (MIDI Effect) and VST3
+
+## What It Does
+
+**straDellaMIDI_plugin** emulates the left-hand (**Stradella bass**) side of a button-accordion.  
+Clicking a button in the plugin's GUI sends the corresponding MIDI note(s) to the downstream  
+instrument or DAW track.
+
+### Layout
+
+The GUI shows a **12-column × 6-row** grid:
+
+| Row | Name | Notes sent |
+|-----|------|------------|
+| 0 | **Counterbass** | Root + perfect 5th (single note) |
+| 1 | **Bass** | Root note only |
+| 2 | **Major** | Root · Major-3rd · 5th |
+| 3 | **Minor** | Root · Minor-3rd · 5th |
+| 4 | **Dom 7** | Root · Major-3rd · 5th · Minor-7th |
+| 5 | **Dim 7** | Root · Minor-3rd · Dim-5th · Dim-7th |
+
+The 12 columns are the 12 chromatic pitches arranged in **circle-of-fifths order**:  
+`Bb → F → C → G → D → A → E → B → F# → Db → Ab → Eb`
+
+Bass notes are voiced in octave 2; chord tones are voiced one octave higher.
 
 ## Repository Contents
 
@@ -25,11 +49,15 @@ Accordion stradella bass side emulator in AU and VST3 format
 5. Open the generated Xcode project and build the **AU** or **VST3** target (Debug or Release).
 6. The built `.component` (AU) and `.vst3` files will be placed in the appropriate plugin directories by Xcode.
 
-## Validating in Logic Pro
+## Using in Logic Pro
 
-After a successful Release build:
-1. Rescan plugins in Logic Pro via **Logic Pro → Preferences → Plug-In Manager → Reset & Rescan Selection**.
-2. The plugin should appear under **Audio Units → yourcompany → straDellaMIDI_plugin**.
+1. After a successful Release build, rescan plugins:  
+   **Logic Pro → Preferences → Plug-In Manager → Reset & Rescan Selection**.
+2. Create a **Software Instrument** track with any instrument you like.
+3. In the **MIDI FX** slot of that instrument channel, insert  
+   **Audio Units MIDI Effects → yourcompany → straDellaMIDI_plugin**.
+4. Open the plugin window — you will see the Stradella bass grid.
+5. Click any button to send MIDI notes to the instrument below it.
 
 ## Plugin Metadata
 
@@ -39,9 +67,9 @@ After a successful Release build:
 | Manufacturer | yourcompany |
 | Manufacturer Code | Manu |
 | Plugin Code | Vb4d |
-| AU Type | aufx (audio effect) |
+| AU Type | `aumf` (MIDI Effect) |
 | Bundle ID | com.yourcompany.straDellaMIDI_plugin |
-| VST3 Category | Fx |
+| VST3 Category | Fx\|MIDI |
 | Formats | AU, VST3 |
 
 > **Before distribution:** replace the placeholder `yourcompany` / `www.yourcompany.com` / `com.yourcompany` values in `straDellaMIDI_plugin.jucer` and `JuceLibraryCode/JucePluginDefines.h` with your actual company name and reverse-domain bundle identifier, then re-save the project in Projucer to regenerate the Xcode build files.
