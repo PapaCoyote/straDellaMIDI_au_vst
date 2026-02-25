@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<JUCERPROJECT id="vb4d7A" name="straDellaMIDI_plugin" projectType="audioplug"
-              version="1.0.0" companyName="yourcompany" companyWebsite="www.yourcompany.com"
+<JUCERPROJECT id="vb4d7A" name="straDellaMIDI" projectType="audioplug" version="1.0.1"
+              companyName="Papa coyote LLC" companyWebsite="www.papacoyote.net"
               useAppConfig="0" addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1"
-              pluginFormats="buildAU,buildVST3"
-              pluginName="straDellaMIDI_plugin" pluginDesc="straDellaMIDI_plugin"
-              pluginManufacturer="yourcompany" pluginManufacturerCode="Manu"
-              pluginCode="Vb4d"
-              pluginIsSynth="0" pluginWantsMidiIn="1" pluginProducesMidiOut="1"
-              pluginIsMidiEffectPlugin="1" pluginEditorRequiresKeys="0"
-              pluginAUExportPrefix="straDellaMIDI_pluginAU" pluginAUMainType="aumf"
-              pluginVST3Category="Fx|MIDI" bundleIdentifier="com.yourcompany.straDellaMIDI_plugin">
-  <MAINGROUP id="chO3FN" name="straDellaMIDI_plugin">
+              pluginFormats="buildAU,buildVST3" pluginName="straDellaMIDI_1.01"
+              pluginDesc="straDellaMIDI_plugin" pluginManufacturer="Papa Coyote"
+              pluginManufacturerCode="Manu" pluginCode="Vb4d" pluginIsSynth="1"
+              pluginWantsMidiIn="0" pluginProducesMidiOut="1" pluginIsMidiEffectPlugin="1"
+              pluginEditorRequiresKeys="0" pluginAUExportPrefix="straDellaMIDI_pluginAU"
+              pluginAUMainType="'aumf'" pluginVST3Category="Fx|MIDI,Instrument"
+              bundleIdentifier="net.papacoyote.straDellaMIDI_plugin" pluginCharacteristicsValue="pluginIsMidiEffectPlugin,pluginIsSynth,pluginProducesMidiOut"
+              pluginAAXDisableBypass="0" pluginAAXDisableMultiMono="0" pluginAAXCategory="65536">
+  <MAINGROUP id="chO3FN" name="straDellaMIDI">
     <GROUP id="{5E187DB7-58E1-AEA5-A7F8-0E52F2460308}" name="Source">
       <FILE id="tQRfx2" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
@@ -42,7 +42,7 @@
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
   <EXPORTFORMATS>
     <XCODE_MAC targetFolder="Builds/MacOSX" bundleIdentifier="com.yourcompany.straDellaMIDI_plugin"
-              macOSDeploymentTarget="10.13">
+               macOSDeploymentTarget="10.13">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="straDellaMIDI_plugin"/>
         <CONFIGURATION isDebug="0" name="Release" targetName="straDellaMIDI_plugin"/>

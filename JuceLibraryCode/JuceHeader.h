@@ -41,9 +41,9 @@
 #if ! JUCE_DONT_DECLARE_PROJECTINFO
 namespace ProjectInfo
 {
-    const char* const  projectName    = "straDellaMIDI_plugin";
-    const char* const  companyName    = "";
-    const char* const  versionString  = "1.0.0";
-    const int          versionNumber  = 0x10000;
+    const char* const  projectName    = "straDellaMIDI";
+    const char* const  companyName    = "Papa coyote LLC";
+    const char* const  versionString  = "1.0.1";
+    const int          versionNumber  = 0x10001;
 }
 #endif
