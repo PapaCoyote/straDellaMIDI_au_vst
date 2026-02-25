@@ -41,7 +41,7 @@
  #define JucePlugin_Enable_ARA             0
 #endif
 #ifndef  JucePlugin_Name
- #define JucePlugin_Name                   "straDellaMIDI_1.01"
+ #define JucePlugin_Name                   "straDellaMIDI_1.02"
 #endif
 #ifndef  JucePlugin_Desc
  #define JucePlugin_Desc                   "straDellaMIDI_plugin"
@@ -92,7 +92,7 @@
  #define JucePlugin_VSTCategory            kPlugCategEffect
 #endif
 #ifndef  JucePlugin_Vst3Category
- #define JucePlugin_Vst3Category           "Fx|MIDI"
+ #define JucePlugin_Vst3Category           "Fx|Fx|MIDI"
 #endif
 #ifndef  JucePlugin_AUMainType
  #define JucePlugin_AUMainType             'aump'
@@ -131,13 +131,13 @@
  #define JucePlugin_AAXDisableMultiMono    0
 #endif
 #ifndef  JucePlugin_IAAType
- #define JucePlugin_IAAType                0x61757267
+ #define JucePlugin_IAAType                0x6175726d
 #endif
 #ifndef  JucePlugin_IAASubType
  #define JucePlugin_IAASubType             JucePlugin_PluginCode
 #endif
 #ifndef  JucePlugin_IAAName
- #define JucePlugin_IAAName                "Papa Coyote: straDellaMIDI_1.01"
+ #define JucePlugin_IAAName                "Papa Coyote: straDellaMIDI_1.02"
 #endif
 #ifndef  JucePlugin_VSTNumMidiInputs
  #define JucePlugin_VSTNumMidiInputs       16
@@ -155,7 +155,7 @@
  #define JucePlugin_ARAFactoryID           "com.PapacoyoteLLC.straDellaMIDI.factory"
 #endif
 #ifndef  JucePlugin_ARADocumentArchiveID
- #define JucePlugin_ARADocumentArchiveID   "com.PapacoyoteLLC.straDellaMIDI.aradocumentarchive.1.0.0"
+ #define JucePlugin_ARADocumentArchiveID   "com.PapacoyoteLLC.straDellaMIDI.aradocumentarchive.1.0.1"
 #endif
 #ifndef  JucePlugin_ARACompatibleArchiveIDs
  #define JucePlugin_ARACompatibleArchiveIDs  ""
