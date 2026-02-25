@@ -39,7 +39,7 @@
   </MODULES>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
   <EXPORTFORMATS>
-    <XCODE_MAC targetFolder="Builds/MacOSX" bundleIdentifier="com.yourcompany.straDellaMIDI_plugin"
+    <XCODE_MAC targetFolder="Builds/MacOSX" bundleIdentifier="net.papacoyote.straDellaMIDI_plugin"
                macOSDeploymentTarget="10.13">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="straDellaMIDI_plugin"/>

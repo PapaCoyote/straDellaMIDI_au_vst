@@ -51,25 +51,47 @@ Bass notes are voiced in octave 2; chord tones are voiced one octave higher.
 
 ## Using in Logic Pro
 
-1. After a successful Release build, rescan plugins:  
-   **Logic Pro → Preferences → Plug-In Manager → Reset & Rescan Selection**.
-2. Create a **Software Instrument** track with any instrument you like.
-3. In the **MIDI FX** slot of that instrument channel, insert  
-   **Audio Units MIDI Effects → yourcompany → straDellaMIDI_plugin**.
+This plugin is a **MIDI Processor** (`kAudioUnitType_MIDIProcessor`).  It appears in Logic Pro's
+**MIDI FX** slot — **not** in Audio FX or Instruments.
+
+### First-time setup / after reinstalling
+
+1. After a successful Release build, force Logic Pro to rescan the plugin:
+   * **Logic Pro → Plug-in Manager** (Logic Pro 10.7+)  
+     *or* **Logic Pro → Preferences → Plug-In Manager** (older versions)  
+   * Click **Reset & Rescan All** (or find the plugin in the list and click **Reset & Rescan**).
+   
+   If the plugin does not appear in the list at all, manually clear the AU cache first:
+
+   ```bash
+   # Quit Logic Pro first, then run:
+   rm -rf ~/Library/Caches/AudioUnitCache
+   ```
+
+   Relaunch Logic Pro — it will perform a fresh scan of all components.
+
+### Loading the plugin
+
+1. Create or select a **Software Instrument** track (or **External MIDI** track).
+2. Click the **MIDI FX** area in the channel strip (above the instrument slot).
+3. Navigate to **Audio Units MIDI Effects → Papa Coyote → straDellaMIDI_1.01**.
 4. Open the plugin window — you will see the Stradella bass grid.
 5. Click any button to send MIDI notes to the instrument below it.
+
+> **Note:** Because this is a MIDI FX plugin, it will **not** appear under Audio FX, Instruments,
+> or in the instrument slot. If you do not see a MIDI FX slot on the channel strip, make sure you
+> are looking at a **Software Instrument** channel, and that the MIDI FX lane is visible
+> (click the triangular disclosure button on the channel strip if needed).
 
 ## Plugin Metadata
 
 | Property | Value |
 |----------|-------|
-| Name | straDellaMIDI_plugin |
-| Manufacturer | yourcompany |
+| Name | straDellaMIDI_1.01 |
+| Manufacturer | Papa Coyote |
 | Manufacturer Code | Manu |
 | Plugin Code | Vb4d |
-| AU Type | `aumf` (MIDI Effect) |
-| Bundle ID | com.yourcompany.straDellaMIDI_plugin |
+| AU Type | `aump` (MIDI Processor — Logic MIDI FX slot) |
+| Bundle ID | net.papacoyote.straDellaMIDI_plugin |
 | VST3 Category | Fx\|MIDI |
 | Formats | AU, VST3 |
-
-> **Before distribution:** replace the placeholder `yourcompany` / `www.yourcompany.com` / `com.yourcompany` values in `straDellaMIDI_plugin.jucer` and `JuceLibraryCode/JucePluginDefines.h` with your actual company name and reverse-domain bundle identifier, then re-save the project in Projucer to regenerate the Xcode build files.
