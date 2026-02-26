@@ -18,10 +18,11 @@ StraDellaMIDI_pluginAudioProcessorEditor::StraDellaMIDI_pluginAudioProcessorEdit
     : AudioProcessorEditor (&p), audioProcessor (p)
 {
     // Total width  = label column + 12 button columns
-    // Total height = header row + 6 button rows
+    // Total height = header row + 4 button rows
     const int w = kLabelW + Proc::NUM_COLUMNS * kBtnW;
     const int h = kHeaderH + Proc::NUM_ROWS   * kBtnH;
     setSize (w, h);
+    setWantsKeyboardFocus (true);
 }
 
 StraDellaMIDI_pluginAudioProcessorEditor::~StraDellaMIDI_pluginAudioProcessorEditor()
@@ -67,8 +68,6 @@ StraDellaMIDI_pluginAudioProcessorEditor::rowColour (int row, bool pressed) cons
         case Proc::BASS:        base = juce::Colour (0xffffffff); break; // white
         case Proc::MAJOR:       base = juce::Colour (0xffffb347); break; // orange
         case Proc::MINOR:       base = juce::Colour (0xff6699ff); break; // blue
-        case Proc::DOM7:        base = juce::Colour (0xffbb77ee); break; // purple
-        case Proc::DIM7:        base = juce::Colour (0xffff6666); break; // red
         default:                base = juce::Colours::grey;
     }
     return pressed ? base.brighter (0.5f) : base;
@@ -113,7 +112,8 @@ void StraDellaMIDI_pluginAudioProcessorEditor::paint (juce::Graphics& g)
     {
         for (int col = 0; col < Proc::NUM_COLUMNS; ++col)
         {
-            const bool pressed = (row == pressedRow && col == pressedCol);
+            const bool pressed = (row == pressedRow && col == pressedCol)
+                              || keyboardPressedGrid[row][col];
             const auto bounds  = buttonBounds (row, col);
 
             // Fill
@@ -162,4 +162,55 @@ void StraDellaMIDI_pluginAudioProcessorEditor::mouseUp (const juce::MouseEvent& 
         pressedRow = pressedCol = -1;
         repaint();
     }
+}
+
+//==============================================================================
+bool StraDellaMIDI_pluginAudioProcessorEditor::keyPressed (const juce::KeyPress& key)
+{
+    const int keyCode = key.getKeyCode();
+
+    // Ignore auto-repeated key events (key already active).
+    if (activeKeyRow.contains (keyCode))
+        return true;
+
+    int row, col;
+    if (keyboardMapper.getButtonCoords (keyCode, row, col))
+    {
+        activeKeyRow.set (keyCode, row);
+        activeKeyCol.set (keyCode, col);
+        keyboardPressedGrid[row][col] = true;
+        audioProcessor.buttonPressed (row, col);
+        repaint();
+        return true;
+    }
+    return false;
+}
+
+bool StraDellaMIDI_pluginAudioProcessorEditor::keyStateChanged (bool isKeyDown)
+{
+    if (isKeyDown)
+        return false;   // key-down events are handled by keyPressed()
+
+    // A key was released — find any active keyboard buttons that are no longer held.
+    juce::Array<int> toRelease;
+    for (auto it = activeKeyRow.begin(); it != activeKeyRow.end(); ++it)
+        if (!juce::KeyPress::isKeyCurrentlyDown (it.getKey()))
+            toRelease.add (it.getKey());
+
+    for (int keyCode : toRelease)
+    {
+        const int row = activeKeyRow[keyCode];
+        const int col = activeKeyCol[keyCode];
+        audioProcessor.buttonReleased (row, col);
+        keyboardPressedGrid[row][col] = false;
+        activeKeyRow.remove (keyCode);
+        activeKeyCol.remove (keyCode);
+    }
+
+    if (!toRelease.isEmpty())
+    {
+        repaint();
+        return true;
+    }
+    return false;
 }

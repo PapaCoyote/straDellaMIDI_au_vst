@@ -4,13 +4,11 @@
     StraDellaMIDI – Stradella Bass Accordion MIDI Effect Plugin
     Emulates the left-hand (Stradella bass) side of an accordion.
 
-    Layout: 12 columns (circle of fifths: Bb→F→C→…→Eb) × 6 rows
-      Row 0 – Counterbass  (single note: root + perfect 5th)
+    Layout: 12 columns (circle of fifths: Bb→F→C→…→Eb) × 4 rows
+      Row 0 – Counterbass  (single note: major 3rd above root)
       Row 1 – Bass         (single root note)
-      Row 2 – Major chord
-      Row 3 – Minor chord
-      Row 4 – Dominant 7th chord
-      Row 5 – Diminished 7th chord
+      Row 2 – Major row    (dominant 7th chord when pressed)
+      Row 3 – Minor row    (minor 7th chord when pressed)
 
   ==============================================================================
 */
@@ -25,9 +23,9 @@ class StraDellaMIDI_pluginAudioProcessor  : public juce::AudioProcessor
 public:
     //==============================================================================
     static constexpr int NUM_COLUMNS = 12;
-    static constexpr int NUM_ROWS    = 6;
+    static constexpr int NUM_ROWS    = 4;
 
-    enum RowType { COUNTERBASS = 0, BASS, MAJOR, MINOR, DOM7, DIM7 };
+    enum RowType { COUNTERBASS = 0, BASS, MAJOR, MINOR };
 
     //==============================================================================
     StraDellaMIDI_pluginAudioProcessor();

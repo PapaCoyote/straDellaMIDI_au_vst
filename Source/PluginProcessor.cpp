@@ -40,7 +40,7 @@ namespace
     };
 
     static const char* kRowNames[StraDellaMIDI_pluginAudioProcessor::NUM_ROWS] = {
-        "Counterbass", "Bass", "Major", "Minor", "Dom 7", "Dim 7"
+        "Counterbass", "Bass", "Major", "Minor"
     };
 }
 
@@ -72,12 +72,10 @@ juce::Array<int> StraDellaMIDI_pluginAudioProcessor::getNotesForButton (int row,
 
     switch (row)
     {
-        case COUNTERBASS:  return { root + 7 };                              // perfect 5th
+        case COUNTERBASS:  return { root + 4 };                              // major 3rd
         case BASS:         return { root };                                  // root only
-        case MAJOR:        return { chordRoot, chordRoot + 4, chordRoot + 7 };
-        case MINOR:        return { chordRoot, chordRoot + 3, chordRoot + 7 };
-        case DOM7:         return { chordRoot, chordRoot + 4, chordRoot + 7, chordRoot + 10 };
-        case DIM7:         return { chordRoot, chordRoot + 3, chordRoot + 6, chordRoot + 9 };
+        case MAJOR:        return { chordRoot, chordRoot + 4, chordRoot + 7, chordRoot + 10 }; // dominant 7th
+        case MINOR:        return { chordRoot, chordRoot + 3, chordRoot + 7, chordRoot + 10 }; // minor 7th
         default:           return {};
     }
 }
