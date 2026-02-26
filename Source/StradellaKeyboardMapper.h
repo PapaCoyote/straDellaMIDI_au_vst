@@ -8,7 +8,7 @@
     Supports loading configuration from a text file for flexible key mappings.
 
     Default keyboard rows (10 of 12 circle-of-fifths pitches: Eb Bb F C G D A E B F#):
-      [counterbass]  1 2 3 4 5 6 7 8 9 0   — major 3rd above root  (Stradella row 0)
+      [third]        1 2 3 4 5 6 7 8 9 0   — major 3rd above root  (Stradella row 0)
       [bass]         q w e r t y u i o p   — root note only         (Stradella row 1)
       [major]        a s d f g h j k l ;   — dominant 7th chord     (Stradella row 2)
       [minor]        z x c v b n m , . /   — minor 7th chord        (Stradella row 3)

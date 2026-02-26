@@ -13,16 +13,68 @@
 using Proc = StraDellaMIDI_pluginAudioProcessor;
 
 //==============================================================================
+// Simple content component used inside the three popup windows.
+class InfoWindowContent : public juce::Component
+{
+public:
+    explicit InfoWindowContent (const juce::String& title)
+    {
+        titleLabel.setText (title, juce::dontSendNotification);
+        titleLabel.setFont (juce::FontOptions (16.0f, juce::Font::bold));
+        titleLabel.setJustificationType (juce::Justification::centred);
+        addAndMakeVisible (titleLabel);
+
+        bodyLabel.setText ("Settings coming soon.", juce::dontSendNotification);
+        bodyLabel.setFont (juce::FontOptions (12.0f));
+        bodyLabel.setJustificationType (juce::Justification::centredTop);
+        addAndMakeVisible (bodyLabel);
+
+        setSize (320, 160);
+    }
+
+    void resized() override
+    {
+        titleLabel.setBounds (10, 10, getWidth() - 20, 30);
+        bodyLabel .setBounds (10, 50, getWidth() - 20, getHeight() - 60);
+    }
+
+private:
+    juce::Label titleLabel, bodyLabel;
+};
+
+//==============================================================================
 StraDellaMIDI_pluginAudioProcessorEditor::StraDellaMIDI_pluginAudioProcessorEditor (
         StraDellaMIDI_pluginAudioProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p)
 {
-    // Total width  = label column + 12 button columns
-    // Total height = header row + 4 button rows
-    const int w = kLabelW + Proc::NUM_COLUMNS * kBtnW;
-    const int h = kHeaderH + Proc::NUM_ROWS   * kBtnH;
+    // Width  = label column + 12 button columns + stagger for last row
+    // Height = title + header + 4 button rows + bottom buttons
+    const int staggerExtra = (Proc::NUM_ROWS - 1) * kRowOffset;
+    const int w = kLabelW + Proc::NUM_COLUMNS * kBtnW + staggerExtra;
+    const int h = kTitleH + kHeaderH + Proc::NUM_ROWS * kBtnH + kBottomH;
     setSize (w, h);
     setWantsKeyboardFocus (true);
+
+    // Bottom buttons – each opens a small movable dialog
+    auto makeDialog = [this](const juce::String& windowTitle)
+    {
+        juce::DialogWindow::LaunchOptions opts;
+        opts.content.setOwned (new InfoWindowContent (windowTitle));
+        opts.dialogTitle           = windowTitle;
+        opts.dialogBackgroundColour= juce::Colour (0xff2a2a3e);
+        opts.escapeKeyTriggersCloseButton = true;
+        opts.useNativeTitleBar     = false;
+        opts.resizable             = false;
+        opts.launchAsync();
+    };
+
+    aboutButton.onClick      = [makeDialog] { makeDialog ("About"); };
+    mappingButton.onClick    = [makeDialog] { makeDialog ("Mapping"); };
+    expressionButton.onClick = [makeDialog] { makeDialog ("Expression"); };
+
+    addAndMakeVisible (aboutButton);
+    addAndMakeVisible (mappingButton);
+    addAndMakeVisible (expressionButton);
 }
 
 StraDellaMIDI_pluginAudioProcessorEditor::~StraDellaMIDI_pluginAudioProcessorEditor()
@@ -31,11 +83,12 @@ StraDellaMIDI_pluginAudioProcessorEditor::~StraDellaMIDI_pluginAudioProcessorEdi
 
 //==============================================================================
 // Returns the pixel bounds for a given button cell.
+// Each successive row is shifted kRowOffset pixels to the right.
 juce::Rectangle<int>
 StraDellaMIDI_pluginAudioProcessorEditor::buttonBounds (int row, int col) const
 {
-    const int x = kLabelW + col * kBtnW;
-    const int y = kHeaderH + row * kBtnH;
+    const int x = kLabelW + col * kBtnW + row * kRowOffset;
+    const int y = kTitleH + kHeaderH + row * kBtnH;
     return { x, y, kBtnW, kBtnH };
 }
 
@@ -45,15 +98,23 @@ void StraDellaMIDI_pluginAudioProcessorEditor::hitTest (
 {
     rowOut = colOut = -1;
 
-    const int col = (pos.x - kLabelW) / kBtnW;
-    const int row = (pos.y - kHeaderH) / kBtnH;
-
-    if (col >= 0 && col < Proc::NUM_COLUMNS &&
-        row >= 0 && row < Proc::NUM_ROWS    &&
-        pos.x >= kLabelW && pos.y >= kHeaderH)
+    for (int r = 0; r < Proc::NUM_ROWS; ++r)
     {
-        rowOut = row;
-        colOut = col;
+        const int yTop = kTitleH + kHeaderH + r * kBtnH;
+        if (pos.y < yTop || pos.y >= yTop + kBtnH)
+            continue;
+
+        const int xOffset = kLabelW + r * kRowOffset;
+        if (pos.x < xOffset)
+            continue;
+
+        const int c = (pos.x - xOffset) / kBtnW;
+        if (c >= 0 && c < Proc::NUM_COLUMNS)
+        {
+            rowOut = r;
+            colOut = c;
+        }
+        return;
     }
 }
 
@@ -79,24 +140,43 @@ void StraDellaMIDI_pluginAudioProcessorEditor::paint (juce::Graphics& g)
     // Background
     g.fillAll (juce::Colour (0xff1a1a2e));
 
+    // ── Branding / title area ────────────────────────────────────────────────
+    {
+        // "straDella" in large bold italic (approximates a script font)
+        juce::Font titleFont (juce::FontOptions (30.0f, juce::Font::bold | juce::Font::italic));
+        g.setColour (juce::Colours::white);
+        g.setFont (titleFont);
+        g.drawFittedText ("straDella",
+                          0, 0, getWidth(), kTitleH - 18,
+                          juce::Justification::centred, 1);
+
+        // "by Papa Coyote" in smaller regular font below
+        juce::Font subFont (juce::FontOptions (13.0f));
+        g.setColour (juce::Colours::lightgrey);
+        g.setFont (subFont);
+        g.drawFittedText ("by Papa Coyote",
+                          0, kTitleH - 18, getWidth(), 16,
+                          juce::Justification::centred, 1);
+    }
+
     const juce::Font labelFont (juce::FontOptions (12.0f, juce::Font::bold));
     const juce::Font noteFont  (juce::FontOptions (11.0f));
 
-    // ── Column headers (note names) ──────────────────────────────────────────
+    // ── Column headers (note names, aligned with row 0) ──────────────────────
     g.setColour (juce::Colours::lightgrey);
     g.setFont (labelFont);
     for (int col = 0; col < Proc::NUM_COLUMNS; ++col)
     {
-        const int x = kLabelW + col * kBtnW;
+        const int x = kLabelW + col * kBtnW;   // row-0 offset = 0
         g.drawFittedText (Proc::getColumnName (col),
-                          x, 0, kBtnW, kHeaderH,
+                          x, kTitleH, kBtnW, kHeaderH,
                           juce::Justification::centred, 1);
     }
 
     // ── Row labels ───────────────────────────────────────────────────────────
     for (int row = 0; row < Proc::NUM_ROWS; ++row)
     {
-        const int y = kHeaderH + row * kBtnH;
+        const int y = kTitleH + kHeaderH + row * kBtnH;
         g.setColour (rowColour (row, false).withAlpha (0.85f));
         g.fillRect (0, y, kLabelW - 2, kBtnH - 1);
 
@@ -126,10 +206,14 @@ void StraDellaMIDI_pluginAudioProcessorEditor::paint (juce::Graphics& g)
             g.drawRoundedRectangle (bounds.reduced (2).toFloat(), 5.0f, 1.0f);
 
             // Note label inside button
+            // Third row shows the note a major 3rd above the root;
+            // all other rows show the root (column) note name.
             g.setColour (juce::Colours::black);
             g.setFont (noteFont);
-            g.drawFittedText (Proc::getColumnName (col),
-                              bounds.reduced (3),
+            const juce::String label = (row == Proc::COUNTERBASS)
+                                       ? Proc::getThirdNoteName (col)
+                                       : Proc::getColumnName (col);
+            g.drawFittedText (label, bounds.reduced (3),
                               juce::Justification::centred, 1);
         }
     }
@@ -137,6 +221,14 @@ void StraDellaMIDI_pluginAudioProcessorEditor::paint (juce::Graphics& g)
 
 void StraDellaMIDI_pluginAudioProcessorEditor::resized()
 {
+    const int totalW   = getWidth();
+    const int btnAreaY = kTitleH + kHeaderH + Proc::NUM_ROWS * kBtnH + 5;
+    const int btnH     = kBottomH - 8;
+    const int third    = (totalW - 8) / 3;
+
+    aboutButton     .setBounds (2,              btnAreaY, third,     btnH);
+    mappingButton   .setBounds (2 + third + 2,  btnAreaY, third,     btnH);
+    expressionButton.setBounds (2 + 2 * (third + 2), btnAreaY, third + 2, btnH);
 }
 
 //==============================================================================

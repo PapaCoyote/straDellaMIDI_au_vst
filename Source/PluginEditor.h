@@ -4,12 +4,12 @@
     StraDellaMIDI – Stradella Bass Accordion MIDI Effect Plugin
     Editor (GUI) declaration.
 
-    The editor draws a 12-column × 6-row grid of clickable buttons that mirror
+    The editor draws a 12-column × 4-row grid of clickable buttons that mirror
     the left-hand (Stradella bass) side of an accordion.  Clicking a button
     sends the corresponding MIDI note(s) to the plugin processor.
 
     Keyboard input is handled by StradellaKeyboardMapper, which maps rows of
-    computer keyboard keys to accordion rows (bass, counterbass, major, minor).
+    computer keyboard keys to accordion rows (third, bass, major, minor).
 
   ==============================================================================
 */
@@ -62,11 +62,19 @@ private:
     bool keyboardPressedGrid[StraDellaMIDI_pluginAudioProcessor::NUM_ROWS]
                             [StraDellaMIDI_pluginAudioProcessor::NUM_COLUMNS] {};
 
+    // Bottom action buttons
+    juce::TextButton aboutButton      { "About" };
+    juce::TextButton mappingButton    { "Mapping" };
+    juce::TextButton expressionButton { "Expression" };
+
     // Layout constants (pixels)
+    static constexpr int kTitleH    = 55;   // branding / title area height
     static constexpr int kHeaderH   = 30;   // column-name header height
     static constexpr int kLabelW    = 82;   // row-name label width
     static constexpr int kBtnW      = 62;   // button cell width
     static constexpr int kBtnH      = 52;   // button cell height
+    static constexpr int kRowOffset = 5;    // x offset added per row for stagger
+    static constexpr int kBottomH   = 40;   // bottom button area height
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (StraDellaMIDI_pluginAudioProcessorEditor)
 };

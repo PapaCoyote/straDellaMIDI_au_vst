@@ -2,12 +2,13 @@
 
 //==============================================================================
 // Root MIDI notes for each of the 12 circle-of-fifths columns, matching
-// PluginProcessor::kRootNotes exactly (all in octave 2, MIDI 36-47):
+// PluginProcessor::kRootNotes exactly (Eb-first order):
 //   Col:  0   1   2   3   4   5   6   7   8   9  10  11
-//   Note: Bb  F   C   G   D   A   E   B   F#  Db  Ab  Eb
+//   Note: Eb  Bb  F   C   G   D   A   E   B   F#  Db  Ab
 namespace
 {
     static const int kColumnRoots[12] = {
+        39, // D#2 / Eb2
         46, // Bb2
         41, // F2
         36, // C2
@@ -18,8 +19,7 @@ namespace
         47, // B2
         42, // F#2 / Gb2
         37, // C#2 / Db2
-        44, // G#2 / Ab2
-        39  // D#2 / Eb2
+        44  // G#2 / Ab2
     };
 
     // Maps KeyType to its plugin grid row index.
@@ -59,15 +59,15 @@ void StradellaKeyboardMapper::setupDefaultMappings()
     keyMappings.clear();
 
     // The 10 mapped keys cover the most-used circle-of-fifths positions:
-    //   Col:   11  0  1  2  3  4  5  6  7  8
-    //   Pitch: Eb Bb  F  C  G  D  A  E  B  F#
+    //   Col:   0   1  2  3  4  5  6  7  8  9
+    //   Pitch: Eb  Bb F  C  G  D  A  E  B  F#
     //
     //   Bass (row 1):         q  w  e  r  t  y  u  i  o  p
     //   Counterbass (row 0):  1  2  3  4  5  6  7  8  9  0
     //   Major/Dom7 (row 2):   a  s  d  f  g  h  j  k  l  ;
     //   Minor/Min7 (row 3):   z  x  c  v  b  n  m  ,  .  /
     static const int kNumKeys = 10;
-    static const int kKeyCols[kNumKeys]  = { 11, 0, 1, 2, 3, 4, 5, 6, 7, 8 };
+    static const int kKeyCols[kNumKeys]  = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
     static const int kBassKeys[kNumKeys] = { 'q','w','e','r','t','y','u','i','o','p' };
     static const int kCBKeys  [kNumKeys] = { '1','2','3','4','5','6','7','8','9','0' };
     static const int kMajKeys [kNumKeys] = { 'a','s','d','f','g','h','j','k','l',';' };
@@ -214,10 +214,10 @@ bool StradellaKeyboardMapper::loadConfiguration (const juce::File& configFile)
         if (line.startsWith ("["))
         {
             const auto name = line.substring (1, line.indexOf ("]")).trim().toLowerCase();
-            if      (name == "bass")        currentSection = KeyType::SingleNote;
-            else if (name == "counterbass") currentSection = KeyType::ThirdNote;
-            else if (name == "major")       currentSection = KeyType::MajorChord;
-            else if (name == "minor")       currentSection = KeyType::MinorChord;
+            if      (name == "bass")                         currentSection = KeyType::SingleNote;
+            else if (name == "counterbass" || name == "third") currentSection = KeyType::ThirdNote;
+            else if (name == "major")                        currentSection = KeyType::MajorChord;
+            else if (name == "minor")                        currentSection = KeyType::MinorChord;
             continue;
         }
 

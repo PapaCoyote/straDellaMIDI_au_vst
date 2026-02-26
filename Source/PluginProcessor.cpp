@@ -13,14 +13,16 @@
 //==============================================================================
 // Stradella bass layout data
 //
-// 12 columns arranged in circle-of-fifths order: Bb F C G D A E B F# Db Ab Eb
+// 12 columns arranged in circle-of-fifths order: Eb Bb F C G D A E B F# Db Ab
+// Eb is placed first to align with the leftmost keyboard key ('q').
 // Root MIDI notes are in the octave-2 register (MIDI 36 = C2).
 //==============================================================================
 
 namespace
 {
-    // Root MIDI note for each column (circle of fifths, starting on Bb2 = 46).
+    // Root MIDI note for each column (Eb-first circle-of-fifths order).
     static const int kRootNotes[StraDellaMIDI_pluginAudioProcessor::NUM_COLUMNS] = {
+        39, // D#2 / Eb2
         46, // Bb2
         41, // F2
         36, // C2
@@ -31,16 +33,31 @@ namespace
         47, // B2
         42, // F#2
         37, // C#2 / Db2
-        44, // G#2 / Ab2
-        39  // D#2 / Eb2
+        44  // G#2 / Ab2
     };
 
     static const char* kColumnNames[StraDellaMIDI_pluginAudioProcessor::NUM_COLUMNS] = {
-        "Bb", "F", "C", "G", "D", "A", "E", "B", "F#", "Db", "Ab", "Eb"
+        "Eb", "Bb", "F", "C", "G", "D", "A", "E", "B", "F#", "Db", "Ab"
+    };
+
+    // Name of the major-3rd note above each column root (for the Third row).
+    static const char* kThirdNames[StraDellaMIDI_pluginAudioProcessor::NUM_COLUMNS] = {
+        "G",  // Eb + M3
+        "D",  // Bb + M3
+        "A",  // F  + M3
+        "E",  // C  + M3
+        "B",  // G  + M3
+        "F#", // D  + M3
+        "C#", // A  + M3
+        "G#", // E  + M3
+        "Eb", // B  + M3 (D# enharmonic)
+        "Bb", // F# + M3 (A# enharmonic)
+        "F",  // Db + M3
+        "C"   // Ab + M3
     };
 
     static const char* kRowNames[StraDellaMIDI_pluginAudioProcessor::NUM_ROWS] = {
-        "Counterbass", "Bass", "Major", "Minor"
+        "Third", "Bass", "Major", "Minor"
     };
 }
 
@@ -61,6 +78,12 @@ juce::String StraDellaMIDI_pluginAudioProcessor::getRowName (int row)
 {
     jassert (row >= 0 && row < NUM_ROWS);
     return kRowNames[row];
+}
+
+juce::String StraDellaMIDI_pluginAudioProcessor::getThirdNoteName (int col)
+{
+    jassert (col >= 0 && col < NUM_COLUMNS);
+    return kThirdNames[col];
 }
 
 // Returns the set of MIDI notes sounded when a given button is pressed.
