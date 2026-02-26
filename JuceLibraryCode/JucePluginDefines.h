@@ -155,7 +155,7 @@
  #define JucePlugin_ARAFactoryID           "com.PapacoyoteLLC.straDellaMIDI.factory"
 #endif
 #ifndef  JucePlugin_ARADocumentArchiveID
- #define JucePlugin_ARADocumentArchiveID   "com.PapacoyoteLLC.straDellaMIDI.aradocumentarchive.1.0.3"
+ #define JucePlugin_ARADocumentArchiveID   "com.PapacoyoteLLC.straDellaMIDI.aradocumentarchive.1.0.4"
 #endif
 #ifndef  JucePlugin_ARACompatibleArchiveIDs
  #define JucePlugin_ARACompatibleArchiveIDs  ""
