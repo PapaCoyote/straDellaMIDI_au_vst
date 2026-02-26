@@ -19,6 +19,8 @@
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
 #include "StradellaKeyboardMapper.h"
+#include "MouseMidiExpression.h"
+#include "MouseMidiSettingsWindow.h"
 
 //==============================================================================
 class StraDellaMIDI_pluginAudioProcessorEditor  : public juce::AudioProcessorEditor
@@ -57,6 +59,9 @@ private:
     StradellaKeyboardMapper keyboardMapper;
     juce::HashMap<int, int> activeKeyRow;   ///< keyCode → plugin row
     juce::HashMap<int, int> activeKeyCol;   ///< keyCode → plugin column
+
+    // Mouse MIDI expression (accordion bellows emulation)
+    MouseMidiExpression mouseExpression;
 
     // Highlight grid cells that are currently triggered by the keyboard.
     bool keyboardPressedGrid[StraDellaMIDI_pluginAudioProcessor::NUM_ROWS]

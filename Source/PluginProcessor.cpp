@@ -160,12 +160,13 @@ juce::AudioProcessorEditor* StraDellaMIDI_pluginAudioProcessor::createEditor()
 
 //==============================================================================
 // Called from the UI thread when a stradella button is clicked.
-void StraDellaMIDI_pluginAudioProcessor::buttonPressed (int row, int col)
+void StraDellaMIDI_pluginAudioProcessor::buttonPressed (int row, int col, int velocity)
 {
     const auto notes = getNotesForButton (row, col);
     const juce::ScopedLock sl (messageLock);
     for (int note : notes)
-        pendingMessages.add (juce::MidiMessage::noteOn (1, juce::jlimit (0, 127, note), (juce::uint8) 100));
+        pendingMessages.add (juce::MidiMessage::noteOn (1, juce::jlimit (0, 127, note),
+                                                        (juce::uint8) juce::jlimit (0, 127, velocity)));
 }
 
 void StraDellaMIDI_pluginAudioProcessor::buttonReleased (int row, int col)
@@ -174,6 +175,12 @@ void StraDellaMIDI_pluginAudioProcessor::buttonReleased (int row, int col)
     const juce::ScopedLock sl (messageLock);
     for (int note : notes)
         pendingMessages.add (juce::MidiMessage::noteOff (1, juce::jlimit (0, 127, note)));
+}
+
+void StraDellaMIDI_pluginAudioProcessor::addMidiMessage (const juce::MidiMessage& msg)
+{
+    const juce::ScopedLock sl (messageLock);
+    pendingMessages.add (msg);
 }
 
 //==============================================================================

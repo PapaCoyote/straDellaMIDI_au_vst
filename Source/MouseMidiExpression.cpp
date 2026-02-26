@@ -237,11 +237,12 @@ void MouseMidiExpression::sendModulationCC(int value)
         // CC1 = Modulation Wheel, using channel 1 (MIDI channels are 1-based in the API)
         auto message = juce::MidiMessage::controllerEvent(1, 1, value);
         
-        // Debug log to verify message is being created
+        #if JUCE_DEBUG
         juce::Logger::writeToLog("Sending CC1 (Modulation): value=" + juce::String(value) + 
                                   " channel=" + juce::String(message.getChannel()) +
                                   " controller=" + juce::String(message.getControllerNumber()) +
                                   " controllerValue=" + juce::String(message.getControllerValue()));
+        #endif
         
         onMidiMessage(message);
     }
@@ -256,11 +257,12 @@ void MouseMidiExpression::sendExpressionCC(int value)
         // CC11 = Expression, using channel 1 (MIDI channels are 1-based in the API)
         auto message = juce::MidiMessage::controllerEvent(1, 11, value);
         
-        // Debug log to verify message is being created
+        #if JUCE_DEBUG
         juce::Logger::writeToLog("Sending CC11 (Expression): value=" + juce::String(value) + 
                                   " channel=" + juce::String(message.getChannel()) +
                                   " controller=" + juce::String(message.getControllerNumber()) +
                                   " controllerValue=" + juce::String(message.getControllerValue()));
+        #endif
         
         onMidiMessage(message);
     }

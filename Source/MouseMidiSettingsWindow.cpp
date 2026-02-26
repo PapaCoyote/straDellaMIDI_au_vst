@@ -87,8 +87,10 @@ void MouseMidiSettingsWindow::setupUI()
     closeButton.setButtonText("Close");
     closeButton.onClick = [this]
     {
-        // Hide this window
-        setVisible(false);
+        if (auto* dw = findParentComponentOfClass<juce::DialogWindow>())
+            dw->closeButtonPressed();
+        else
+            setVisible(false);
     };
     addAndMakeVisible(closeButton);
 }
