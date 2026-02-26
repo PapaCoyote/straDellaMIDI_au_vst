@@ -18,7 +18,7 @@ StraDellaMIDI_pluginAudioProcessorEditor::StraDellaMIDI_pluginAudioProcessorEdit
     : AudioProcessorEditor (&p), audioProcessor (p)
 {
     // Total width  = label column + 12 button columns
-    // Total height = header row + 6 button rows
+    // Total height = header row + 4 button rows
     const int w = kLabelW + Proc::NUM_COLUMNS * kBtnW;
     const int h = kHeaderH + Proc::NUM_ROWS   * kBtnH;
     setSize (w, h);
@@ -68,8 +68,6 @@ StraDellaMIDI_pluginAudioProcessorEditor::rowColour (int row, bool pressed) cons
         case Proc::BASS:        base = juce::Colour (0xffffffff); break; // white
         case Proc::MAJOR:       base = juce::Colour (0xffffb347); break; // orange
         case Proc::MINOR:       base = juce::Colour (0xff6699ff); break; // blue
-        case Proc::DOM7:        base = juce::Colour (0xffbb77ee); break; // purple
-        case Proc::DIM7:        base = juce::Colour (0xffff6666); break; // red
         default:                base = juce::Colours::grey;
     }
     return pressed ? base.brighter (0.5f) : base;

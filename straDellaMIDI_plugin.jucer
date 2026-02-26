@@ -8,7 +8,7 @@
               pluginManufacturerCode="Manu" pluginCode="Vb4d" pluginIsSynth="0"
               pluginWantsMidiIn="1" pluginProducesMidiOut="1" pluginIsMidiEffectPlugin="1"
               pluginEditorRequiresKeys="1" pluginAUExportPrefix="straDellaMIDI_pluginAU"
-              pluginAUMainType="'aump'" pluginVST3Category="Fx|MIDI"
+              pluginAUMainType="kAudioUnitType_MIDIProcessor" pluginVST3Category="Fx|MIDI"
               bundleIdentifier="net.papacoyote.straDellaMIDI_plugin" pluginCharacteristicsValue="pluginIsMidiEffectPlugin,pluginProducesMidiOut,pluginWantsMidiIn"
               pluginAAXDisableBypass="0" pluginAAXDisableMultiMono="0" pluginAAXCategory="65536">
   <MAINGROUP id="chO3FN" name="straDellaMIDI">

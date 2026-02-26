@@ -4,113 +4,81 @@
 #   [section]           — declares chord type for lines below
 #   key = note1[,note2,...] [# comment]
 #
-# Sections: [bass] [counterbass] [major] [minor] [dom7] [dim7]
+# Sections: [bass] [counterbass] [major] [minor]
 #
 # Keyboard layout (10 of 12 circle-of-fifths pitches):
-#   Key:   a  s  d  f  g  h  j  k  l  ;
-#   Pitch: Eb Bb F  C  G  D  A  E  B  F#
-#   Col:   11  0  1  2  3  4  5  6  7  8   (plugin grid column)
+#   Col:   11  0  1  2  3  4  5  6  7  8
+#   Pitch: Eb Bb  F  C  G  D  A  E  B  F#
+#
+#   [bass]         q w e r t y u i o p   — root note only
+#   [counterbass]  1 2 3 4 5 6 7 8 9 0   — major 3rd above root
+#   [major]        a s d f g h j k l ;   — dominant 7th chord (root+12, M3, P5, m7)
+#   [minor]        z x c v b n m , . /   — minor 7th chord    (root+12, m3, P5, m7)
 #
 # Stradella bass system — MIDI note ranges:
-#   Bass (row 1) :  root only,        octave 2  (MIDI 36-47)
-#   Counterbass (row 0): root+7 (P5), octave 2-3
-#   Chords (rows 2-5):  root+12 + intervals, octave 3
-
-# ── [counterbass] ─────────────────────────────────────────────────────────────
-# Perfect 5th above the bass root note  (matches Stradella row 0)
-# These notes are one octave above the bass row, forming the "counter" voice.
-
-[counterbass]
-z = 46      # Bb2 — counterbass for Eb (39+7)
-x = 53      # F3  — counterbass for Bb (46+7)
-c = 48      # C3  — counterbass for F  (41+7)
-v = 43      # G2  — counterbass for C  (36+7)
-b = 50      # D3  — counterbass for G  (43+7)
-n = 45      # A2  — counterbass for D  (38+7)
-m = 52      # E3  — counterbass for A  (45+7)
-, = 47      # B2  — counterbass for E  (40+7)
-. = 54      # F#3 — counterbass for B  (47+7)
-/ = 49      # C#3 — counterbass for F# (42+7)
+#   Bass (row 1) :  root only,              octave 2  (MIDI 36-47)
+#   Counterbass (row 0): root+4 (M3),       octave 2-3
+#   Major row (row 2): dominant 7th,        octave 3
+#   Minor row (row 3): minor 7th,           octave 3
 
 # ── [bass] ────────────────────────────────────────────────────────────────────
 # Single root note, octave 2  (matches Stradella row 1)
 
 [bass]
-a = 39      # Eb2
-s = 46      # Bb2
-d = 41      # F2
-f = 36      # C2
-g = 43      # G2
-h = 38      # D2
-j = 45      # A2
-k = 40      # E2
-l = 47      # B2
-; = 42      # F#2
+q = 39      # Eb2
+w = 46      # Bb2
+e = 41      # F2
+r = 36      # C2
+t = 43      # G2
+y = 38      # D2
+u = 45      # A2
+i = 40      # E2
+o = 47      # B2
+p = 42      # F#2
+
+# ── [counterbass] ─────────────────────────────────────────────────────────────
+# Major 3rd above the bass root note  (matches Stradella row 0)
+
+[counterbass]
+1 = 43      # G2  — major 3rd above Eb (39+4)
+2 = 50      # D3  — major 3rd above Bb (46+4)
+3 = 45      # A2  — major 3rd above F  (41+4)
+4 = 40      # E2  — major 3rd above C  (36+4)
+5 = 47      # B2  — major 3rd above G  (43+4)
+6 = 42      # F#2 — major 3rd above D  (38+4)
+7 = 49      # C#3 — major 3rd above A  (45+4)
+8 = 44      # G#2 — major 3rd above E  (40+4)
+9 = 51      # D#3 — major 3rd above B  (47+4)
+0 = 46      # Bb2 — major 3rd above F# (42+4)
 
 # ── [major] ───────────────────────────────────────────────────────────────────
-# Major triad: chordRoot (root+12), major 3rd (+4), perfect 5th (+7)
-# Chord voicings one octave above the bass row  (matches Stradella row 2)
+# Dominant 7th: chordRoot (root+12), major 3rd (+4), perfect 5th (+7), minor 7th (+10)
+#   (matches Stradella row 2)
 
 [major]
-q = 51,55,58    # Eb3 Major  (Eb3, G3,  Bb3)
-w = 58,62,65    # Bb3 Major  (Bb3, D4,  F4 )
-e = 53,57,60    # F3  Major  (F3,  A3,  C4 )
-r = 48,52,55    # C3  Major  (C3,  E3,  G3 )
-t = 55,59,62    # G3  Major  (G3,  B3,  D4 )
-y = 50,54,57    # D3  Major  (D3,  F#3, A3 )
-u = 57,61,64    # A3  Major  (A3,  C#4, E4 )
-i = 52,56,59    # E3  Major  (E3,  G#3, B3 )
-o = 59,63,66    # B3  Major  (B3,  D#4, F#4)
-p = 54,58,61    # F#3 Major  (F#3, A#3, C#4)
+a = 51,55,58,61    # Eb3 Dom7  (Eb3, G3,  Bb3, Db4)
+s = 58,62,65,68    # Bb3 Dom7  (Bb3, D4,  F4,  Ab4)
+d = 53,57,60,63    # F3  Dom7  (F3,  A3,  C4,  Eb4)
+f = 48,52,55,58    # C3  Dom7  (C3,  E3,  G3,  Bb3)
+g = 55,59,62,65    # G3  Dom7  (G3,  B3,  D4,  F4 )
+h = 50,54,57,60    # D3  Dom7  (D3,  F#3, A3,  C4 )
+j = 57,61,64,67    # A3  Dom7  (A3,  C#4, E4,  G4 )
+k = 52,56,59,62    # E3  Dom7  (E3,  G#3, B3,  D4 )
+l = 59,63,66,69    # B3  Dom7  (B3,  D#4, F#4, A4 )
+; = 54,58,61,64    # F#3 Dom7  (F#3, A#3, C#4, E4 )
 
 # ── [minor] ───────────────────────────────────────────────────────────────────
-# Minor triad: chordRoot (root+12), minor 3rd (+3), perfect 5th (+7)
+# Minor 7th: chordRoot (root+12), minor 3rd (+3), perfect 5th (+7), minor 7th (+10)
 #   (matches Stradella row 3)
 
 [minor]
-1 = 51,54,58    # Eb3 Minor  (Eb3, F#3, Bb3)
-2 = 58,61,65    # Bb3 Minor  (Bb3, Db4, F4 )
-3 = 53,56,60    # F3  Minor  (F3,  Ab3, C4 )
-4 = 48,51,55    # C3  Minor  (C3,  Eb3, G3 )
-5 = 55,58,62    # G3  Minor  (G3,  Bb3, D4 )
-6 = 50,53,57    # D3  Minor  (D3,  F3,  A3 )
-7 = 57,60,64    # A3  Minor  (A3,  C4,  E4 )
-8 = 52,55,59    # E3  Minor  (E3,  G3,  B3 )
-9 = 59,62,66    # B3  Minor  (B3,  D4,  F#4)
-0 = 54,57,61    # F#3 Minor  (F#3, A3,  C#4)
-
-# ── [dom7] ────────────────────────────────────────────────────────────────────
-# Dominant 7th: chordRoot, major 3rd (+4), perfect 5th (+7), minor 7th (+10)
-#   (matches Stradella row 4)
-# No default key bindings — add custom assignments below as needed.
-
-[dom7]
-# Example: uncomment and assign a key to use Dom7 chords
-# a = 51,55,58,61    # Eb3 Dom7  (Eb3, G3,  Bb3, Db4)
-# s = 58,62,65,68    # Bb3 Dom7  (Bb3, D4,  F4,  Ab4)
-# d = 53,57,60,63    # F3  Dom7  (F3,  A3,  C4,  Eb4)
-# f = 48,52,55,58    # C3  Dom7  (C3,  E3,  G3,  Bb3)
-# g = 55,59,62,65    # G3  Dom7  (G3,  B3,  D4,  F4 )
-# h = 50,54,57,60    # D3  Dom7  (D3,  F#3, A3,  C4 )
-# j = 57,61,64,67    # A3  Dom7  (A3,  C#4, E4,  G4 )
-# k = 52,56,59,62    # E3  Dom7  (E3,  G#3, B3,  D4 )
-# l = 59,63,66,69    # B3  Dom7  (B3,  D#4, F#4, A4 )
-# ; = 54,58,61,64    # F#3 Dom7  (F#3, A#3, C#4, E4 )
-
-# ── [dim7] ────────────────────────────────────────────────────────────────────
-# Diminished 7th: chordRoot, minor 3rd (+3), dim 5th (+6), dim 7th (+9)
-#   (matches Stradella row 5)
-# No default key bindings — add custom assignments below as needed.
-
-[dim7]
-# Example: uncomment and assign a key to use Dim7 chords
-# a = 51,54,57,60    # Eb3 Dim7  (Eb3, F#3, A3,  C4 )
-# s = 58,61,64,67    # Bb3 Dim7  (Bb3, Db4, E4,  G4 )
-# d = 53,56,59,62    # F3  Dim7  (F3,  Ab3, B3,  D4 )
-# f = 48,51,54,57    # C3  Dim7  (C3,  Eb3, F#3, A3 )
-# g = 55,58,61,64    # G3  Dim7  (G3,  Bb3, Db4, E4 )
-# h = 50,53,56,59    # D3  Dim7  (D3,  F3,  Ab3, B3 )
-# j = 57,60,63,66    # A3  Dim7  (A3,  C4,  Eb4, F#4)
-# k = 52,55,58,61    # E3  Dim7  (E3,  G3,  Bb3, Db4)
-# l = 59,62,65,68    # B3  Dim7  (B3,  D4,  F4,  Ab4)
-# ; = 54,57,60,63    # F#3 Dim7  (F#3, A3,  C4,  Eb4)
+z = 51,54,58,61    # Eb3 Min7  (Eb3, F#3, Bb3, Db4)
+x = 58,61,65,68    # Bb3 Min7  (Bb3, Db4, F4,  Ab4)
+c = 53,56,60,63    # F3  Min7  (F3,  Ab3, C4,  Eb4)
+v = 48,51,55,58    # C3  Min7  (C3,  Eb3, G3,  Bb3)
+b = 55,58,62,65    # G3  Min7  (G3,  Bb3, D4,  F4 )
+n = 50,53,57,60    # D3  Min7  (D3,  F3,  A3,  C4 )
+m = 57,60,64,67    # A3  Min7  (A3,  C4,  E4,  G4 )
+, = 52,55,59,62    # E3  Min7  (E3,  G3,  B3,  D4 )
+. = 59,62,66,69    # B3  Min7  (B3,  D4,  F#4, A4 )
+/ = 54,57,61,64    # F#3 Min7  (F#3, A3,  C#4, E4 )

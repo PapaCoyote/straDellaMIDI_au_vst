@@ -31,8 +31,6 @@ namespace
             case StradellaKeyboardMapper::KeyType::SingleNote: return 1; // BASS
             case StradellaKeyboardMapper::KeyType::MajorChord: return 2; // MAJOR
             case StradellaKeyboardMapper::KeyType::MinorChord: return 3; // MINOR
-            case StradellaKeyboardMapper::KeyType::Dom7Chord:  return 4; // DOM7
-            case StradellaKeyboardMapper::KeyType::Dim7Chord:  return 5; // DIM7
             default: return -1;
         }
     }
@@ -61,21 +59,25 @@ void StradellaKeyboardMapper::setupDefaultMappings()
     keyMappings.clear();
 
     // The 10 mapped keys cover the most-used circle-of-fifths positions:
-    //   Keyboard: a  s  d  f  g  h  j  k  l  ;
-    //   Pitch:    Eb Bb F  C  G  D  A  E  B  F#
-    //   Col:      11  0  1  2  3  4  5  6  7  8
+    //   Col:   11  0  1  2  3  4  5  6  7  8
+    //   Pitch: Eb Bb  F  C  G  D  A  E  B  F#
+    //
+    //   Bass (row 1):         q  w  e  r  t  y  u  i  o  p
+    //   Counterbass (row 0):  1  2  3  4  5  6  7  8  9  0
+    //   Major/Dom7 (row 2):   a  s  d  f  g  h  j  k  l  ;
+    //   Minor/Min7 (row 3):   z  x  c  v  b  n  m  ,  .  /
     static const int kNumKeys = 10;
     static const int kKeyCols[kNumKeys]  = { 11, 0, 1, 2, 3, 4, 5, 6, 7, 8 };
-    static const int kBassKeys[kNumKeys] = { 'a','s','d','f','g','h','j','k','l',';' };
-    static const int kCBKeys  [kNumKeys] = { 'z','x','c','v','b','n','m',',','.','/' };
-    static const int kMajKeys [kNumKeys] = { 'q','w','e','r','t','y','u','i','o','p' };
-    static const int kMinKeys [kNumKeys] = { '1','2','3','4','5','6','7','8','9','0' };
+    static const int kBassKeys[kNumKeys] = { 'q','w','e','r','t','y','u','i','o','p' };
+    static const int kCBKeys  [kNumKeys] = { '1','2','3','4','5','6','7','8','9','0' };
+    static const int kMajKeys [kNumKeys] = { 'a','s','d','f','g','h','j','k','l',';' };
+    static const int kMinKeys [kNumKeys] = { 'z','x','c','v','b','n','m',',','.','/' };
 
     for (int i = 0; i < kNumKeys; ++i)
     {
         const int col       = kKeyCols[i];
         const int root      = kColumnRoots[col];  // bass note, octave 2
-        const int cbNote    = root + 7;            // perfect 5th (counterbass)
+        const int cbNote    = root + 4;            // major 3rd (counterbass)
         const int chordRoot = root + 12;           // chord root, octave 3
 
         const juce::String rootName = getMidiNoteName (root);
@@ -92,7 +94,7 @@ void StradellaKeyboardMapper::setupDefaultMappings()
             keyMappings.set (m.keyCode, m);
         }
 
-        // ── Row 0: Counterbass (perfect 5th above root) ──────────────────────
+        // ── Row 0: Counterbass (major 3rd above root) ────────────────────────
         {
             KeyMapping m;
             m.keyCode   = kCBKeys[i];
@@ -104,29 +106,31 @@ void StradellaKeyboardMapper::setupDefaultMappings()
             keyMappings.set (m.keyCode, m);
         }
 
-        // ── Row 2: Major triad (chordRoot, M3, P5) ───────────────────────────
+        // ── Row 2: Dominant 7th (chordRoot, M3, P5, m7) ─────────────────────
         {
             KeyMapping m;
             m.keyCode   = kMajKeys[i];
             m.type      = KeyType::MajorChord;
             m.midiNotes.add (chordRoot);
-            m.midiNotes.add (chordRoot + 4);   // major 3rd
-            m.midiNotes.add (chordRoot + 7);   // perfect 5th
-            m.description = rootName + " Major";
+            m.midiNotes.add (chordRoot + 4);    // major 3rd
+            m.midiNotes.add (chordRoot + 7);    // perfect 5th
+            m.midiNotes.add (chordRoot + 10);   // minor 7th
+            m.description = rootName + " Dom7";
             m.pluginRow = 2;
             m.pluginCol = col;
             keyMappings.set (m.keyCode, m);
         }
 
-        // ── Row 3: Minor triad (chordRoot, m3, P5) ───────────────────────────
+        // ── Row 3: Minor 7th (chordRoot, m3, P5, m7) ────────────────────────
         {
             KeyMapping m;
             m.keyCode   = kMinKeys[i];
             m.type      = KeyType::MinorChord;
             m.midiNotes.add (chordRoot);
-            m.midiNotes.add (chordRoot + 3);   // minor 3rd
-            m.midiNotes.add (chordRoot + 7);   // perfect 5th
-            m.description = rootName + " Minor";
+            m.midiNotes.add (chordRoot + 3);    // minor 3rd
+            m.midiNotes.add (chordRoot + 7);    // perfect 5th
+            m.midiNotes.add (chordRoot + 10);   // minor 7th
+            m.description = rootName + " Min7";
             m.pluginRow = 3;
             m.pluginCol = col;
             keyMappings.set (m.keyCode, m);
@@ -197,7 +201,7 @@ bool StradellaKeyboardMapper::loadConfiguration (const juce::File& configFile)
     configFile.readLines (lines);
 
     // Current section determines the KeyType for subsequent key=value lines.
-    // Supported: [bass], [counterbass], [major], [minor], [dom7], [dim7]
+    // Supported: [bass], [counterbass], [major], [minor]
     KeyType currentSection = KeyType::SingleNote;
 
     for (const auto& rawLine : lines)
@@ -214,8 +218,6 @@ bool StradellaKeyboardMapper::loadConfiguration (const juce::File& configFile)
             else if (name == "counterbass") currentSection = KeyType::ThirdNote;
             else if (name == "major")       currentSection = KeyType::MajorChord;
             else if (name == "minor")       currentSection = KeyType::MinorChord;
-            else if (name == "dom7")        currentSection = KeyType::Dom7Chord;
-            else if (name == "dim7")        currentSection = KeyType::Dim7Chord;
             continue;
         }
 
@@ -249,16 +251,14 @@ bool StradellaKeyboardMapper::loadConfiguration (const juce::File& configFile)
 
         // Determine the root note so we can find the plugin column.
         //   SingleNote  → notes[0] is the root (octave 2)
-        //   ThirdNote   → notes[0] is root+7;  root = notes[0]-7
+        //   ThirdNote   → notes[0] is root+4;  root = notes[0]-4
         //   Chord types → notes[0] is root+12; root = notes[0]-12
         int rootNote = notes[0];
         switch (currentSection)
         {
-            case KeyType::ThirdNote:  rootNote = notes[0] - 7;  break;
+            case KeyType::ThirdNote:  rootNote = notes[0] - 4;  break;
             case KeyType::MajorChord:
-            case KeyType::MinorChord:
-            case KeyType::Dom7Chord:
-            case KeyType::Dim7Chord:  rootNote = notes[0] - 12; break;
+            case KeyType::MinorChord: rootNote = notes[0] - 12; break;
             default: break;
         }
 

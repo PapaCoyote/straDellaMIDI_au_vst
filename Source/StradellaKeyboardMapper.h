@@ -8,23 +8,20 @@
     Supports loading configuration from a text file for flexible key mappings.
 
     Default keyboard rows (10 of 12 circle-of-fifths pitches: Eb Bb F C G D A E B F#):
-      [counterbass]  z x c v b n m , . /   — perfect 5th above root (Stradella row 0)
-      [bass]         a s d f g h j k l ;   — root note only         (Stradella row 1)
-      [major]        q w e r t y u i o p   — major triad            (Stradella row 2)
-      [minor]        1 2 3 4 5 6 7 8 9 0   — minor triad            (Stradella row 3)
-    [dom7] and [dim7] rows are not mapped by default but are available via config file.
+      [counterbass]  1 2 3 4 5 6 7 8 9 0   — major 3rd above root  (Stradella row 0)
+      [bass]         q w e r t y u i o p   — root note only         (Stradella row 1)
+      [major]        a s d f g h j k l ;   — dominant 7th chord     (Stradella row 2)
+      [minor]        z x c v b n m , . /   — minor 7th chord        (Stradella row 3)
 */
 class StradellaKeyboardMapper
 {
 public:
     enum class KeyType
     {
-        SingleNote,      // Bass row: a,s,d,f,g,h,j,k,l,; — root note only (Stradella bass row)
-        ThirdNote,       // Counterbass row: z x c v b n m , . / — perfect 5th above root
-        MajorChord,      // Major chord row: q,w,e,r,t,y,u,i,o,p — root, major 3rd, perfect 5th
-        MinorChord,      // Minor chord row: 1,2,3,4,5,6,7,8,9,0 — root, minor 3rd, perfect 5th
-        Dom7Chord,       // Dominant 7th chord — root, major 3rd, perfect 5th, minor 7th
-        Dim7Chord        // Diminished 7th chord — root, minor 3rd, diminished 5th, diminished 7th
+        SingleNote,      // Bass row: q,w,e,r,t,y,u,i,o,p — root note only (Stradella bass row)
+        ThirdNote,       // Counterbass row: 1 2 3 4 5 6 7 8 9 0 — major 3rd above root
+        MajorChord,      // Major row: a,s,d,f,g,h,j,k,l,; — dominant 7th chord
+        MinorChord       // Minor row: z,x,c,v,b,n,m,,.,/ — minor 7th chord
     };
 
     //==============================================================================
@@ -51,7 +48,7 @@ public:
     /**
         Maps a keyboard key code to its corresponding plugin grid coordinates.
         Returns true and sets rowOut/colOut when a mapping is found.
-        rowOut matches PluginProcessor row constants (0=COUNTERBASS … 5=DIM7).
+        rowOut matches PluginProcessor row constants (0=COUNTERBASS … 3=MINOR).
         colOut matches the circle-of-fifths column (0=Bb … 11=Eb).
     */
     bool getButtonCoords(int keyCode, int& rowOut, int& colOut) const;
