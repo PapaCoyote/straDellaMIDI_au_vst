@@ -41,7 +41,7 @@ namespace ProjectInfo
 {
     const char* const  projectName    = "straDellaMIDI";
     const char* const  companyName    = "Papa coyote LLC";
-    const char* const  versionString  = "1.0.1";
-    const int          versionNumber  = 0x10001;
+    const char* const  versionString  = "1.0.3";
+    const int          versionNumber  = 0x10003;
 }
 #endif
