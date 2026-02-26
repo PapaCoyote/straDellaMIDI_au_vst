@@ -8,6 +8,9 @@
     the left-hand (Stradella bass) side of an accordion.  Clicking a button
     sends the corresponding MIDI note(s) to the plugin processor.
 
+    Keyboard input is handled by StradellaKeyboardMapper, which maps rows of
+    computer keyboard keys to accordion rows (bass, counterbass, major, minor).
+
   ==============================================================================
 */
 
@@ -15,6 +18,7 @@
 
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
+#include "StradellaKeyboardMapper.h"
 
 //==============================================================================
 class StraDellaMIDI_pluginAudioProcessorEditor  : public juce::AudioProcessorEditor
@@ -29,6 +33,9 @@ public:
 
     void mouseDown (const juce::MouseEvent&) override;
     void mouseUp   (const juce::MouseEvent&) override;
+
+    bool keyPressed      (const juce::KeyPress&) override;
+    bool keyStateChanged (bool isKeyDown)        override;
 
 private:
     //==============================================================================
@@ -45,6 +52,15 @@ private:
     // Track which button (if any) is currently held by the mouse.
     int pressedRow { -1 };
     int pressedCol { -1 };
+
+    // Keyboard input: maps computer key codes to their active grid cell.
+    StradellaKeyboardMapper keyboardMapper;
+    juce::HashMap<int, int> activeKeyRow;   ///< keyCode → plugin row
+    juce::HashMap<int, int> activeKeyCol;   ///< keyCode → plugin column
+
+    // Highlight grid cells that are currently triggered by the keyboard.
+    bool keyboardPressedGrid[StraDellaMIDI_pluginAudioProcessor::NUM_ROWS]
+                            [StraDellaMIDI_pluginAudioProcessor::NUM_COLUMNS] {};
 
     // Layout constants (pixels)
     static constexpr int kHeaderH   = 30;   // column-name header height

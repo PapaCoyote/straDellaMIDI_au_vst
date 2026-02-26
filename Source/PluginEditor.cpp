@@ -22,6 +22,7 @@ StraDellaMIDI_pluginAudioProcessorEditor::StraDellaMIDI_pluginAudioProcessorEdit
     const int w = kLabelW + Proc::NUM_COLUMNS * kBtnW;
     const int h = kHeaderH + Proc::NUM_ROWS   * kBtnH;
     setSize (w, h);
+    setWantsKeyboardFocus (true);
 }
 
 StraDellaMIDI_pluginAudioProcessorEditor::~StraDellaMIDI_pluginAudioProcessorEditor()
@@ -113,7 +114,8 @@ void StraDellaMIDI_pluginAudioProcessorEditor::paint (juce::Graphics& g)
     {
         for (int col = 0; col < Proc::NUM_COLUMNS; ++col)
         {
-            const bool pressed = (row == pressedRow && col == pressedCol);
+            const bool pressed = (row == pressedRow && col == pressedCol)
+                              || keyboardPressedGrid[row][col];
             const auto bounds  = buttonBounds (row, col);
 
             // Fill
@@ -162,4 +164,55 @@ void StraDellaMIDI_pluginAudioProcessorEditor::mouseUp (const juce::MouseEvent& 
         pressedRow = pressedCol = -1;
         repaint();
     }
+}
+
+//==============================================================================
+bool StraDellaMIDI_pluginAudioProcessorEditor::keyPressed (const juce::KeyPress& key)
+{
+    const int keyCode = key.getKeyCode();
+
+    // Ignore auto-repeated key events (key already active).
+    if (activeKeyRow.contains (keyCode))
+        return true;
+
+    int row, col;
+    if (keyboardMapper.getButtonCoords (keyCode, row, col))
+    {
+        activeKeyRow.set (keyCode, row);
+        activeKeyCol.set (keyCode, col);
+        keyboardPressedGrid[row][col] = true;
+        audioProcessor.buttonPressed (row, col);
+        repaint();
+        return true;
+    }
+    return false;
+}
+
+bool StraDellaMIDI_pluginAudioProcessorEditor::keyStateChanged (bool isKeyDown)
+{
+    if (isKeyDown)
+        return false;   // key-down events are handled by keyPressed()
+
+    // A key was released — find any active keyboard buttons that are no longer held.
+    juce::Array<int> toRelease;
+    for (auto it = activeKeyRow.begin(); it != activeKeyRow.end(); ++it)
+        if (!juce::KeyPress::isKeyCurrentlyDown (it.getKey()))
+            toRelease.add (it.getKey());
+
+    for (int keyCode : toRelease)
+    {
+        const int row = activeKeyRow[keyCode];
+        const int col = activeKeyCol[keyCode];
+        audioProcessor.buttonReleased (row, col);
+        keyboardPressedGrid[row][col] = false;
+        activeKeyRow.remove (keyCode);
+        activeKeyCol.remove (keyCode);
+    }
+
+    if (!toRelease.isEmpty())
+    {
+        repaint();
+        return true;
+    }
+    return false;
 }

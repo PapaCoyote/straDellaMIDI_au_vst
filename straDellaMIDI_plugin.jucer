@@ -7,7 +7,7 @@
               pluginDesc="straDellaMIDI_plugin" pluginManufacturer="Papa Coyote"
               pluginManufacturerCode="Manu" pluginCode="Vb4d" pluginIsSynth="0"
               pluginWantsMidiIn="1" pluginProducesMidiOut="1" pluginIsMidiEffectPlugin="1"
-              pluginEditorRequiresKeys="0" pluginAUExportPrefix="straDellaMIDI_pluginAU"
+              pluginEditorRequiresKeys="1" pluginAUExportPrefix="straDellaMIDI_pluginAU"
               pluginAUMainType="'aump'" pluginVST3Category="Fx|MIDI"
               bundleIdentifier="net.papacoyote.straDellaMIDI_plugin" pluginCharacteristicsValue="pluginIsMidiEffectPlugin,pluginProducesMidiOut,pluginWantsMidiIn"
               pluginAAXDisableBypass="0" pluginAAXDisableMultiMono="0" pluginAAXCategory="65536">
@@ -20,6 +20,10 @@
       <FILE id="w0P60W" name="PluginEditor.cpp" compile="1" resource="0"
             file="Source/PluginEditor.cpp"/>
       <FILE id="bPy0WF" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
+      <FILE id="sKm1A3" name="StradellaKeyboardMapper.cpp" compile="1" resource="0"
+            file="Source/StradellaKeyboardMapper.cpp"/>
+      <FILE id="sKm1B4" name="StradellaKeyboardMapper.h" compile="0" resource="0"
+            file="Source/StradellaKeyboardMapper.h"/>
     </GROUP>
   </MAINGROUP>
   <MODULES>
