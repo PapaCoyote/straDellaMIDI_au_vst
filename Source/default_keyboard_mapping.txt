@@ -1,0 +1,61 @@
+# Stradella Accordion Keyboard Mapping Configuration
+# This file defines the mapping between computer keyboard keys and MIDI notes
+
+# Format:
+# key_character = midi_notes (comma-separated for chords)
+# Lines starting with # are comments
+
+# Row 1: Single notes in cycle of fifths (all in Octave 1 per Stradella bass system)
+# F key = C1 (MIDI 24), arranged in cycle of fifths
+# A, S, D, F, G, H, J, K, L, ;
+A = 27      # Eb1
+S = 34      # Bb1  
+D = 29      # F1
+F = 24      # C1
+G = 31      # G1
+H = 26      # D1
+J = 33      # A1
+K = 28      # E1
+L = 35      # B1
+; = 30      # F#1
+
+# Row 2: Third notes (major third above single notes, all in Octave 1)
+# Each note is +4 semitones above the corresponding single note (wrapping within octave)
+Z = 31      # G1  (third above Eb1)
+X = 26      # D1  (third above Bb1, wraps to octave 1)
+C = 33      # A1  (third above F1)
+V = 28      # E1  (third above C1)
+B = 35      # B1  (third above G1)
+N = 30      # F#1 (third above D1)
+M = 25      # C#1 (third above A1, wraps to octave 1)
+, = 32      # G#1 (third above E1)
+. = 27      # Eb1 (third above B1, wraps to octave 1)
+/ = 34      # Bb1 (third above F#1)
+
+# Row 3: Major chords (root, major third, perfect fifth)
+# All notes in Octave 2 (MIDI 36-47) as per Stradella bass system
+# Cycle of fifths starting from Eb: Eb, Bb, F, C, G, D, A, E, B, F#
+Q = 39,43,46     # Eb2 Major (D#2 Major)
+W = 46,50,53     # Bb2 Major (A#2 Major)
+E = 41,45,48     # F2 Major
+R = 36,40,43     # C2 Major
+T = 43,47,50     # G2 Major
+Y = 38,42,45     # D2 Major
+U = 45,49,52     # A2 Major
+I = 40,44,47     # E2 Major
+O = 47,51,54     # B2 Major
+P = 42,46,49     # F#2 Major
+
+# Row 4: Minor chords (root, minor third, perfect fifth)
+# All notes in Octave 2 (MIDI 36-47) as per Stradella bass system
+# Cycle of fifths starting from Eb: Eb, Bb, F, C, G, D, A, E, B, F#
+1 = 39,42,46     # Eb2 Minor (D#2 Minor)
+2 = 46,49,53     # Bb2 Minor (A#2 Minor)
+3 = 41,44,48     # F2 Minor
+4 = 36,39,43     # C2 Minor
+5 = 43,46,50     # G2 Minor
+6 = 38,41,45     # D2 Minor
+7 = 45,48,52     # A2 Minor
+8 = 40,43,47     # E2 Minor
+9 = 47,50,54     # B2 Minor
+0 = 42,45,49     # F#2 Minor
