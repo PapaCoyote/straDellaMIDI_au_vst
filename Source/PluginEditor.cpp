@@ -70,11 +70,51 @@ StraDellaMIDI_pluginAudioProcessorEditor::StraDellaMIDI_pluginAudioProcessorEdit
 
     aboutButton.onClick      = [makeDialog] { makeDialog ("About"); };
     mappingButton.onClick    = [makeDialog] { makeDialog ("Mapping"); };
-    expressionButton.onClick = [makeDialog] { makeDialog ("Expression"); };
+
+    // Expression button: show the MouseMidiSettingsWindow inside a dialog.
+    expressionButton.onClick = [this]
+    {
+        juce::DialogWindow::LaunchOptions opts;
+        opts.content.setOwned (new MouseMidiSettingsWindow (mouseExpression));
+        opts.dialogTitle                  = "Expression Settings";
+        opts.dialogBackgroundColour       = juce::Colour (0xff2a2a3e);
+        opts.escapeKeyTriggersCloseButton = true;
+        opts.useNativeTitleBar            = false;
+        opts.resizable                    = false;
+        opts.launchAsync();
+    };
 
     addAndMakeVisible (aboutButton);
     addAndMakeVisible (mappingButton);
     addAndMakeVisible (expressionButton);
+
+    // Wire mouse expression MIDI output to the processor.
+    mouseExpression.onMidiMessage = [this] (const juce::MidiMessage& msg)
+    {
+        audioProcessor.addMidiMessage (msg);
+    };
+
+    // When the bellows direction changes, retrigger all held notes.
+    mouseExpression.onDirectionChange = [this]
+    {
+        const int vel = mouseExpression.getCurrentNoteVelocity();
+
+        if (pressedRow >= 0)
+        {
+            audioProcessor.buttonReleased (pressedRow, pressedCol);
+            audioProcessor.buttonPressed  (pressedRow, pressedCol, vel);
+        }
+
+        for (auto it = activeKeyRow.begin(); it != activeKeyRow.end(); ++it)
+        {
+            const int row = it.getValue();
+            const int col = activeKeyCol[it.getKey()];
+            audioProcessor.buttonReleased (row, col);
+            audioProcessor.buttonPressed  (row, col, vel);
+        }
+    };
+
+    mouseExpression.startTracking();
 }
 
 StraDellaMIDI_pluginAudioProcessorEditor::~StraDellaMIDI_pluginAudioProcessorEditor()
@@ -241,7 +281,7 @@ void StraDellaMIDI_pluginAudioProcessorEditor::mouseDown (const juce::MouseEvent
     {
         pressedRow = row;
         pressedCol = col;
-        audioProcessor.buttonPressed (row, col);
+        audioProcessor.buttonPressed (row, col, mouseExpression.getCurrentNoteVelocity());
         repaint();
     }
 }
@@ -271,7 +311,7 @@ bool StraDellaMIDI_pluginAudioProcessorEditor::keyPressed (const juce::KeyPress&
         activeKeyRow.set (keyCode, row);
         activeKeyCol.set (keyCode, col);
         keyboardPressedGrid[row][col] = true;
-        audioProcessor.buttonPressed (row, col);
+        audioProcessor.buttonPressed (row, col, mouseExpression.getCurrentNoteVelocity());
         repaint();
         return true;
     }

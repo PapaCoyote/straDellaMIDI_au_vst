@@ -5,7 +5,7 @@ MouseMidiSettingsWindow::MouseMidiSettingsWindow(MouseMidiExpression& midiExpres
     : mouseMidiExpression(midiExpression)
 {
     setupUI();
-    setSize(400, 350);  // Adjusted height for removed slider
+    setSize(400, 385);
 }
 
 MouseMidiSettingsWindow::~MouseMidiSettingsWindow()
@@ -42,6 +42,17 @@ void MouseMidiSettingsWindow::setupUI()
         mouseMidiExpression.setExpressionEnabled(expressionCheckbox.getToggleState());
     };
     addAndMakeVisible(expressionCheckbox);
+    
+    // Direction-change retrigger checkbox
+    retriggerLabel.setText("Retrigger notes on bellows direction change:", juce::dontSendNotification);
+    addAndMakeVisible(retriggerLabel);
+    
+    retriggerCheckbox.setToggleState(mouseMidiExpression.isRetriggerOnDirectionChangeEnabled(), juce::dontSendNotification);
+    retriggerCheckbox.onClick = [this]
+    {
+        mouseMidiExpression.setRetriggerOnDirectionChange(retriggerCheckbox.getToggleState());
+    };
+    addAndMakeVisible(retriggerCheckbox);
     
     // Curve selector
     curveLabel.setText("Response Curve:", juce::dontSendNotification);
@@ -87,8 +98,10 @@ void MouseMidiSettingsWindow::setupUI()
     closeButton.setButtonText("Close");
     closeButton.onClick = [this]
     {
-        // Hide this window
-        setVisible(false);
+        if (auto* dw = findParentComponentOfClass<juce::DialogWindow>())
+            dw->closeButtonPressed();
+        else
+            setVisible(false);
     };
     addAndMakeVisible(closeButton);
 }
@@ -110,16 +123,15 @@ void MouseMidiSettingsWindow::paint(juce::Graphics& g)
         "Configure how mouse movement affects MIDI expression.\n\n"
         "Note Velocity: Controlled by mouse Y position\n"
         "  (top = loud, bottom = quiet)\n\n"
-        "CC1 & CC11: Controlled by mouse Y position, but ONLY\n"
-        "  when moving horizontally. Values decay to 0 when\n"
-        "  horizontal movement stops.\n\n"
-        "Direction Change: Moving left<->right retriggers notes\n"
+        "CC1 & CC11: Track mouse Y position continuously.\n"
+        "  Values update whenever the mouse moves.\n\n"
+        "Direction Change: Moving left\u2194right can retrigger notes\n"
         "  to emulate accordion bellows direction change.\n\n"
         "Curve affects how values respond to Y position.\n"
         "Mouse tracking is global across entire desktop.";
     
     auto infoArea = getLocalBounds().reduced(20);
-    infoArea.removeFromTop(200);  // Adjusted for removed slider
+    infoArea.removeFromTop(235);
     
     g.drawMultiLineText(infoText, infoArea.getX(), infoArea.getY(), 
                         infoArea.getWidth(), juce::Justification::left);
@@ -143,6 +155,12 @@ void MouseMidiSettingsWindow::resized()
     auto expressionArea = area.removeFromTop(25);
     expressionCheckbox.setBounds(expressionArea.removeFromLeft(25));
     expressionLabel.setBounds(expressionArea);
+    area.removeFromTop(10);
+    
+    // Direction-change retrigger setting
+    auto retriggerArea = area.removeFromTop(25);
+    retriggerCheckbox.setBounds(retriggerArea.removeFromLeft(25));
+    retriggerLabel.setBounds(retriggerArea);
     area.removeFromTop(10);
     
     // Curve selector

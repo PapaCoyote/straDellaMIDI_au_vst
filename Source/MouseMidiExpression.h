@@ -6,9 +6,8 @@
 /**
     Handles mouse-based MIDI expression control, emulating accordion bellows.
     - Mouse Y position determines note velocity (127 at top, 0 at bottom)
-    - Mouse Y position determines CC1 and CC11 (only when moving in X direction)
-    - CC1 and CC11 decay to 0 when X movement stops
-    - X direction changes trigger note off/on for all pressed keys
+    - Mouse Y position determines CC1 and CC11 continuously as the mouse moves
+    - X direction changes optionally trigger note off/on for all pressed keys
     
     Uses global mouse tracking to monitor movement across the entire desktop.
 */
@@ -37,6 +36,9 @@ public:
     /** Sets the curve type for mapping */
     void setCurveType(CurveType type) { curveType = type; }
     
+    /** Sets whether a direction reversal retriggers held notes */
+    void setRetriggerOnDirectionChange(bool enabled) { retriggerOnDirectionChangeEnabled = enabled; }
+    
     /** Gets the current modulation enabled state */
     bool isModulationEnabled() const { return modulationEnabled; }
     
@@ -45,6 +47,9 @@ public:
     
     /** Gets the current curve type */
     CurveType getCurveType() const { return curveType; }
+    
+    /** Gets whether direction-change retrigger is enabled */
+    bool isRetriggerOnDirectionChangeEnabled() const { return retriggerOnDirectionChangeEnabled; }
     
     /** Gets the current note velocity based on mouse Y position (127 at top, 0 at bottom) */
     int getCurrentNoteVelocity() const { return currentNoteVelocity; }
@@ -69,16 +74,14 @@ private:
     //==============================================================================
     bool modulationEnabled = true;      // CC1 enabled by default
     bool expressionEnabled = true;      // CC11 enabled by default
+    bool retriggerOnDirectionChangeEnabled = true; // Retrigger notes on direction change by default
     CurveType curveType = CurveType::Linear;
     
     int currentNoteVelocity = 0;        // Current velocity based on Y position
     
     // Direction tracking
     bool isMovingRight = true;          // Track horizontal direction
-    bool wasMovingInLastFrame = false;  // Track if mouse was moving
-    juce::int64 lastXMovementTime = 0;  // Time of last X movement
-    static constexpr juce::int64 decayDelayMs = 100; // Time delay before CC decay starts
-    static constexpr juce::int64 ccDecayDurationMs = 200; // Duration of CC value decay to 0
+    bool wasMovingInLastFrame = false;  // Track if mouse was moving in X
     
     // Velocity scaling constants
     static constexpr float maxVelocityPixelsPerSecond = 2000.0f;  // Max velocity for normalization

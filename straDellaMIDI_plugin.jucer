@@ -24,6 +24,14 @@
             file="Source/StradellaKeyboardMapper.cpp"/>
       <FILE id="sKm1B4" name="StradellaKeyboardMapper.h" compile="0" resource="0"
             file="Source/StradellaKeyboardMapper.h"/>
+      <FILE id="mMe1C5" name="MouseMidiExpression.cpp" compile="1" resource="0"
+            file="Source/MouseMidiExpression.cpp"/>
+      <FILE id="mMe1D6" name="MouseMidiExpression.h" compile="0" resource="0"
+            file="Source/MouseMidiExpression.h"/>
+      <FILE id="mMs1E7" name="MouseMidiSettingsWindow.cpp" compile="1" resource="0"
+            file="Source/MouseMidiSettingsWindow.cpp"/>
+      <FILE id="mMs1F8" name="MouseMidiSettingsWindow.h" compile="0" resource="0"
+            file="Source/MouseMidiSettingsWindow.h"/>
     </GROUP>
   </MAINGROUP>
   <MODULES>

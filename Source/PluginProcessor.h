@@ -62,8 +62,11 @@ public:
 
     //==============================================================================
     // Called from the editor (UI thread) to queue note-on / note-off events.
-    void buttonPressed  (int row, int col);
+    void buttonPressed  (int row, int col, int velocity = 100);
     void buttonReleased (int row, int col);
+
+    // Called to queue arbitrary MIDI messages (e.g. CC from mouse expression).
+    void addMidiMessage (const juce::MidiMessage& msg);
 
     // Static helpers – public so the editor can use them for labels.
     static juce::Array<int> getNotesForButton (int row, int col);
