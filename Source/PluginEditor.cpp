@@ -78,7 +78,10 @@ StraDellaMIDI_pluginAudioProcessorEditor::StraDellaMIDI_pluginAudioProcessorEdit
             setOpaque (false);
             auto* disp = juce::Desktop::getInstance().getDisplays().getPrimaryDisplay();
             if (disp != nullptr)
+            {
                 setSize (disp->userArea.getWidth(), disp->userArea.getHeight());
+                setTopLeftPosition (0, 0);
+            }
         }
         else
         {
@@ -138,7 +141,19 @@ StraDellaMIDI_pluginAudioProcessorEditor::StraDellaMIDI_pluginAudioProcessorEdit
     };
 
     aboutButton.onClick      = [makeDialog] { makeDialog ("About"); };
-    mappingButton.onClick    = [makeDialog] { makeDialog ("Mapping"); };
+
+    // Mapping button: show voicing settings.
+    mappingButton.onClick = [this]
+    {
+        juce::DialogWindow::LaunchOptions opts;
+        opts.content.setOwned (new MappingSettingsWindow (audioProcessor));
+        opts.dialogTitle                  = "Mapping Settings";
+        opts.dialogBackgroundColour       = juce::Colour (0xff2a2a3e);
+        opts.escapeKeyTriggersCloseButton = true;
+        opts.useNativeTitleBar            = false;
+        opts.resizable                    = false;
+        opts.launchAsync();
+    };
 
     // Expression button: show the MouseMidiSettingsWindow inside a dialog.
     expressionButton.onClick = [this]
@@ -393,6 +408,12 @@ void StraDellaMIDI_pluginAudioProcessorEditor::globalFocusChanged (juce::Compone
 //==============================================================================
 void StraDellaMIDI_pluginAudioProcessorEditor::mouseDown (const juce::MouseEvent& e)
 {
+    // In Focus mode the grid is driven exclusively by the computer keyboard.
+    // Mouse clicks on the grid are suppressed to prevent the double-trigger
+    // stuck-note scenario (mouse + keyboard pressing the same cell).
+    if (focusActive)
+        return;
+
     int row, col;
     hitTest (e.getPosition(), row, col);
 

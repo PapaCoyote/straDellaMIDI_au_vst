@@ -21,6 +21,7 @@
 #include "StradellaKeyboardMapper.h"
 #include "MouseMidiExpression.h"
 #include "MouseMidiSettingsWindow.h"
+#include "MappingSettingsWindow.h"
 
 //==============================================================================
 class StraDellaMIDI_pluginAudioProcessorEditor  : public juce::AudioProcessorEditor,

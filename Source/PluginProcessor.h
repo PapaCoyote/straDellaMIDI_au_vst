@@ -116,6 +116,13 @@ private:
     // so buttonReleased() can send the exact note-offs that were sent on press.
     juce::HashMap<int, juce::Array<int>> activeNotes;
 
+    // Reference count per cell: counts how many input sources (mouse + keyboard)
+    // are simultaneously holding the same button.  Note-on is sent only when the
+    // count rises from 0 to 1; note-off is sent only when the count falls to 0.
+    // This prevents stuck notes when both the mouse and a keyboard key trigger the
+    // same cell at the same time.
+    juce::HashMap<int, int> pressCount;
+
     VoicingSettings voicingSettings;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (StraDellaMIDI_pluginAudioProcessor)

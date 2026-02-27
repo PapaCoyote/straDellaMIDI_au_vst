@@ -225,19 +225,44 @@ juce::AudioProcessorEditor* StraDellaMIDI_pluginAudioProcessor::createEditor()
 void StraDellaMIDI_pluginAudioProcessor::buttonPressed (int row, int col, int velocity,
                                                          bool leftMouseDown, bool rightMouseDown)
 {
-    const auto notes = getNotesForButton (row, col, leftMouseDown, rightMouseDown);
-    const int  key   = row * 1000 + col;
+    const int key = row * 1000 + col;
     const juce::ScopedLock sl (messageLock);
-    activeNotes.set (key, notes);
-    for (int note : notes)
-        pendingMessages.add (juce::MidiMessage::noteOn (1, juce::jlimit (0, 127, note),
-                                                        (juce::uint8) juce::jlimit (0, 127, velocity)));
+
+    // Increment reference count.  Send note-on only the first time the cell
+    // is pressed (count rises from 0 → 1); subsequent presses from a second
+    // input source (mouse + keyboard simultaneously) are ignored so that a
+    // single note-off from either source cannot leave a stuck note.
+    const int count = pressCount.contains (key) ? pressCount[key] : 0;
+    pressCount.set (key, count + 1);
+
+    if (count == 0)
+    {
+        const auto notes = getNotesForButton (row, col, leftMouseDown, rightMouseDown);
+        activeNotes.set (key, notes);
+        for (int note : notes)
+            pendingMessages.add (juce::MidiMessage::noteOn (1, juce::jlimit (0, 127, note),
+                                                            (juce::uint8) juce::jlimit (0, 127, velocity)));
+    }
 }
 
 void StraDellaMIDI_pluginAudioProcessor::buttonReleased (int row, int col)
 {
     const int key = row * 1000 + col;
     const juce::ScopedLock sl (messageLock);
+
+    if (!pressCount.contains (key))
+        return;
+
+    const int newCount = pressCount[key] - 1;
+    if (newCount > 0)
+    {
+        // Another source is still holding the cell; just decrement.
+        pressCount.set (key, newCount);
+        return;
+    }
+
+    // Count reached 0: send note-offs and clean up.
+    pressCount.remove (key);
     if (activeNotes.contains (key))
     {
         for (int note : activeNotes[key])
@@ -256,6 +281,7 @@ void StraDellaMIDI_pluginAudioProcessor::sendAllNotesOff()
 {
     const juce::ScopedLock sl (messageLock);
     activeNotes.clear();
+    pressCount.clear();
     for (int ch = 1; ch <= 16; ++ch)
     {
         pendingMessages.add (juce::MidiMessage::allNotesOff (ch));
