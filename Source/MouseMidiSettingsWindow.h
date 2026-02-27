@@ -31,6 +31,9 @@ private:
     juce::ToggleButton expressionCheckbox;
     juce::Label expressionLabel;
     
+    juce::ToggleButton retriggerCheckbox;
+    juce::Label retriggerLabel;
+    
     juce::ComboBox curveSelector;
     juce::Label curveLabel;
     

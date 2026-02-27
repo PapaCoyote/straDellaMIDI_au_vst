@@ -7,7 +7,6 @@ MouseMidiExpression::MouseMidiExpression()
     lastMousePosition = juce::Desktop::getInstance().getMainMouseSource().getScreenPosition().toInt();
     currentMousePosition = lastMousePosition;
     lastMouseTime = juce::Time::currentTimeMillis();
-    lastXMovementTime = lastMouseTime;
     
     // Get desktop bounds for expression calculation
     screenBounds = juce::Desktop::getInstance().getDisplays().getPrimaryDisplay()->totalArea;
@@ -37,22 +36,9 @@ void MouseMidiExpression::timerCallback()
     // Poll mouse position globally
     auto mousePos = juce::Desktop::getInstance().getMainMouseSource().getScreenPosition().toInt();
     
-    // Process on position change OR to handle CC decay
     if (mousePos != currentMousePosition)
     {
         processMouseMovement(mousePos);
-    }
-    else
-    {
-        // Even if mouse hasn't moved, process to handle CC decay
-        juce::int64 currentTime = juce::Time::currentTimeMillis();
-        juce::int64 timeSinceLastXMovement = currentTime - lastXMovementTime;
-        
-        // If we should be decaying, process movement with same position
-        if (timeSinceLastXMovement > decayDelayMs && (lastModulationValue > 0 || lastExpressionValue > 0))
-        {
-            processMouseMovement(mousePos);
-        }
     }
 }
 
@@ -70,102 +56,46 @@ void MouseMidiExpression::processMouseMovement(const juce::Point<int>& mousePos)
     // Calculate note velocity from Y position (127 at top, 0 at bottom)
     currentNoteVelocity = calculateVelocityFromYPosition(mousePos.y);
     
-    // Calculate X movement
+    // Calculate X movement for direction-change detection
     int deltaX = currentMousePosition.x - lastMousePosition.x;
     bool isMovingInX = std::abs(deltaX) > 0;
     
-    // Update direction and detect changes if moving in X
+    // Detect direction changes and optionally retrigger notes
     if (isMovingInX)
     {
         bool isMovingRightNow = (deltaX > 0);
         
-        // Detect direction change only if we were moving in the previous frame
-        if (wasMovingInLastFrame && isMovingRightNow != isMovingRight)
+        if (retriggerOnDirectionChangeEnabled && wasMovingInLastFrame && isMovingRightNow != isMovingRight)
         {
-            // Direction changed! Trigger note retrigger callback
             if (onDirectionChange)
-            {
                 onDirectionChange();
-            }
         }
         
-        // Update direction
         isMovingRight = isMovingRightNow;
-        lastXMovementTime = currentTime;
         wasMovingInLastFrame = true;
     }
     else
     {
-        // Not moving in X - reset the flag for accurate direction change detection
         wasMovingInLastFrame = false;
     }
     
-    // Check if we should decay CC values (no X movement for decay delay time)
-    juce::int64 timeSinceLastXMovement = currentTime - lastXMovementTime;
-    bool shouldDecay = timeSinceLastXMovement > decayDelayMs;
+    // CC values always track Y position
+    float normalized = (float)currentNoteVelocity / 127.0f;
+    float curved = applyCurve(normalized);
+    int ccValue = (int)(curved * 127.0f);
     
-    // Calculate CC values based on Y position, but only when moving in X
-    int cc1Value = 0;
-    int cc11Value = 0;
-    
-    if (isMovingInX)
+    // Send CC1 (Modulation Wheel) if enabled and value changed
+    if (modulationEnabled && std::abs(ccValue - lastModulationValue) >= 1)
     {
-        // Use Y position for CC values (same as note velocity)
-        int ccValue = currentNoteVelocity;
-        
-        // Apply curve
-        float normalized = (float)ccValue / 127.0f;
-        float curved = applyCurve(normalized);
-        ccValue = (int)(curved * 127.0f);
-        
-        // Both CCs use same value when moving
-        cc1Value = ccValue;
-        cc11Value = ccValue;
-    }
-    else if (shouldDecay)
-    {
-        // Smooth decay to 0 - each CC decays from its own last value
-        // Calculate remaining factor (1.0 = full value, 0.0 = fully decayed)
-        float remainingFactor = 1.0f - juce::jlimit(0.0f, 1.0f, 
-            (float)(timeSinceLastXMovement - decayDelayMs) / (float)ccDecayDurationMs);
-        
-        cc1Value = (int)(lastModulationValue * remainingFactor);
-        cc11Value = (int)(lastExpressionValue * remainingFactor);
-        
-        // If decay is complete, ensure values are actually 0
-        if (remainingFactor <= 0.0f)
-        {
-            cc1Value = 0;
-            cc11Value = 0;
-        }
-    }
-    else
-    {
-        // Keep last values briefly during delay period
-        cc1Value = lastModulationValue;
-        cc11Value = lastExpressionValue;
+        sendModulationCC(ccValue);
+        lastModulationValue = ccValue;
     }
     
-    // Send CC1 (Modulation Wheel) if enabled
-    if (modulationEnabled)
+    // Send CC11 (Expression) if enabled and value changed
+    if (expressionEnabled && std::abs(ccValue - lastExpressionValue) >= 1)
     {
-        // Only send if value changed significantly
-        if (std::abs(cc1Value - lastModulationValue) >= 1)
-        {
-            sendModulationCC(cc1Value);
-            lastModulationValue = cc1Value;
-        }
-    }
-    
-    // Send CC11 (Expression) with its own value if enabled
-    if (expressionEnabled)
-    {
-        // Only send if value changed significantly
-        if (std::abs(cc11Value - lastExpressionValue) >= 1)
-        {
-            sendExpressionCC(cc11Value);
-            lastExpressionValue = cc11Value;
-        }
+        sendExpressionCC(ccValue);
+        lastExpressionValue = ccValue;
     }
     
     // Update tracking variables
