@@ -1,176 +1,131 @@
 #include "MouseMidiSettingsWindow.h"
 
 //==============================================================================
-MouseMidiSettingsWindow::MouseMidiSettingsWindow(MouseMidiExpression& midiExpression)
-    : mouseMidiExpression(midiExpression)
+MouseMidiSettingsWindow::MouseMidiSettingsWindow (MouseMidiExpression& midiExpression,
+                                                  StraDellaMIDI_pluginAudioProcessor& processor)
+    : mouseMidiExpression (midiExpression), audioProcessor (processor)
 {
     setupUI();
-    setSize(400, 385);
+    setSize (440, 240);
 }
 
-MouseMidiSettingsWindow::~MouseMidiSettingsWindow()
-{
-}
+MouseMidiSettingsWindow::~MouseMidiSettingsWindow() {}
 
 //==============================================================================
 void MouseMidiSettingsWindow::setupUI()
 {
-    // Title
-    titleLabel.setText("Expression Settings", juce::dontSendNotification);
-    titleLabel.setFont(juce::Font(18.0f, juce::Font::bold));
-    titleLabel.setJustificationType(juce::Justification::centred);
-    addAndMakeVisible(titleLabel);
-    
-    // CC1 (Modulation Wheel) checkbox
-    modulationLabel.setText("CC1 (Modulation) - Y Position (when moving in X):", juce::dontSendNotification);
-    addAndMakeVisible(modulationLabel);
-    
-    modulationCheckbox.setToggleState(mouseMidiExpression.isModulationEnabled(), juce::dontSendNotification);
-    modulationCheckbox.onClick = [this]
-    {
-        mouseMidiExpression.setModulationEnabled(modulationCheckbox.getToggleState());
-    };
-    addAndMakeVisible(modulationCheckbox);
-    
-    // CC11 (Expression) checkbox
-    expressionLabel.setText("CC11 (Expression) - Y Position (when moving in X):", juce::dontSendNotification);
-    addAndMakeVisible(expressionLabel);
-    
-    expressionCheckbox.setToggleState(mouseMidiExpression.isExpressionEnabled(), juce::dontSendNotification);
-    expressionCheckbox.onClick = [this]
-    {
-        mouseMidiExpression.setExpressionEnabled(expressionCheckbox.getToggleState());
-    };
-    addAndMakeVisible(expressionCheckbox);
-    
-    // Direction-change retrigger checkbox
-    retriggerLabel.setText("Retrigger notes on bellows direction change:", juce::dontSendNotification);
-    addAndMakeVisible(retriggerLabel);
-    
-    retriggerCheckbox.setToggleState(mouseMidiExpression.isRetriggerOnDirectionChangeEnabled(), juce::dontSendNotification);
-    retriggerCheckbox.onClick = [this]
-    {
-        mouseMidiExpression.setRetriggerOnDirectionChange(retriggerCheckbox.getToggleState());
-    };
-    addAndMakeVisible(retriggerCheckbox);
-    
-    // Curve selector
-    curveLabel.setText("Response Curve:", juce::dontSendNotification);
-    addAndMakeVisible(curveLabel);
-    
-    curveSelector.addItem("Linear", 1);
-    curveSelector.addItem("Exponential", 2);
-    curveSelector.addItem("Logarithmic", 3);
-    
-    // Set current curve
+    // ── Title ─────────────────────────────────────────────────────────────────
+    titleLabel.setText ("Expression Settings", juce::dontSendNotification);
+    titleLabel.setFont (juce::Font (17.0f, juce::Font::bold));
+    titleLabel.setJustificationType (juce::Justification::centred);
+    addAndMakeVisible (titleLabel);
+
+    // ── Section header ────────────────────────────────────────────────────────
+    expressionSectionLabel.setText ("Mouse Expression", juce::dontSendNotification);
+    expressionSectionLabel.setFont (juce::Font (12.0f, juce::Font::bold));
+    expressionSectionLabel.setColour (juce::Label::textColourId, juce::Colours::lightgrey);
+    addAndMakeVisible (expressionSectionLabel);
+
+    // ── CC1 (Modulation Wheel) ─────────────────────────────────────────────────
+    modulationLabel.setText ("CC1 (Modulation) — Y position while moving:", juce::dontSendNotification);
+    addAndMakeVisible (modulationLabel);
+    modulationCheckbox.setToggleState (mouseMidiExpression.isModulationEnabled(), juce::dontSendNotification);
+    modulationCheckbox.onClick = [this] { mouseMidiExpression.setModulationEnabled (modulationCheckbox.getToggleState()); };
+    addAndMakeVisible (modulationCheckbox);
+
+    // ── CC11 (Expression) ─────────────────────────────────────────────────────
+    expressionLabel.setText ("CC11 (Expression) — Y position while moving:", juce::dontSendNotification);
+    addAndMakeVisible (expressionLabel);
+    expressionCheckbox.setToggleState (mouseMidiExpression.isExpressionEnabled(), juce::dontSendNotification);
+    expressionCheckbox.onClick = [this] { mouseMidiExpression.setExpressionEnabled (expressionCheckbox.getToggleState()); };
+    addAndMakeVisible (expressionCheckbox);
+
+    // ── Retrigger ─────────────────────────────────────────────────────────────
+    retriggerLabel.setText ("Retrigger notes on bellows direction change:", juce::dontSendNotification);
+    addAndMakeVisible (retriggerLabel);
+    retriggerCheckbox.setToggleState (mouseMidiExpression.isRetriggerOnDirectionChangeEnabled(), juce::dontSendNotification);
+    retriggerCheckbox.onClick = [this] { mouseMidiExpression.setRetriggerOnDirectionChange (retriggerCheckbox.getToggleState()); };
+    addAndMakeVisible (retriggerCheckbox);
+
+    // ── Curve selector ────────────────────────────────────────────────────────
+    curveLabel.setText ("Response Curve:", juce::dontSendNotification);
+    addAndMakeVisible (curveLabel);
+    curveSelector.addItem ("Linear",      1);
+    curveSelector.addItem ("Exponential", 2);
+    curveSelector.addItem ("Logarithmic", 3);
     switch (mouseMidiExpression.getCurveType())
     {
-        case MouseMidiExpression::CurveType::Linear:
-            curveSelector.setSelectedId(1, juce::dontSendNotification);
-            break;
-        case MouseMidiExpression::CurveType::Exponential:
-            curveSelector.setSelectedId(2, juce::dontSendNotification);
-            break;
-        case MouseMidiExpression::CurveType::Logarithmic:
-            curveSelector.setSelectedId(3, juce::dontSendNotification);
-            break;
+        case MouseMidiExpression::CurveType::Exponential: curveSelector.setSelectedId (2, juce::dontSendNotification); break;
+        case MouseMidiExpression::CurveType::Logarithmic: curveSelector.setSelectedId (3, juce::dontSendNotification); break;
+        default:                                          curveSelector.setSelectedId (1, juce::dontSendNotification); break;
     }
-    
     curveSelector.onChange = [this]
     {
-        int selectedId = curveSelector.getSelectedId();
-        switch (selectedId)
+        switch (curveSelector.getSelectedId())
         {
-            case 1:
-                mouseMidiExpression.setCurveType(MouseMidiExpression::CurveType::Linear);
-                break;
-            case 2:
-                mouseMidiExpression.setCurveType(MouseMidiExpression::CurveType::Exponential);
-                break;
-            case 3:
-                mouseMidiExpression.setCurveType(MouseMidiExpression::CurveType::Logarithmic);
-                break;
+            case 2:  mouseMidiExpression.setCurveType (MouseMidiExpression::CurveType::Exponential); break;
+            case 3:  mouseMidiExpression.setCurveType (MouseMidiExpression::CurveType::Logarithmic); break;
+            default: mouseMidiExpression.setCurveType (MouseMidiExpression::CurveType::Linear);      break;
         }
     };
-    addAndMakeVisible(curveSelector);
-    
-    // Close button
-    closeButton.setButtonText("Close");
+    addAndMakeVisible (curveSelector);
+
+    // ── Close button ──────────────────────────────────────────────────────────
+    closeButton.setButtonText ("Close");
     closeButton.onClick = [this]
     {
         if (auto* dw = findParentComponentOfClass<juce::DialogWindow>())
             dw->closeButtonPressed();
         else
-            setVisible(false);
+            setVisible (false);
     };
-    addAndMakeVisible(closeButton);
+    addAndMakeVisible (closeButton);
 }
 
-void MouseMidiSettingsWindow::paint(juce::Graphics& g)
+//==============================================================================
+void MouseMidiSettingsWindow::paint (juce::Graphics& g)
 {
-    // Fill background
-    g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
-    
-    // Draw a border
-    g.setColour(juce::Colours::grey);
-    g.drawRect(getLocalBounds(), 2);
-    
-    // Draw some info text
-    g.setColour(juce::Colours::white.withAlpha(0.7f));
-    g.setFont(11.0f);
-    
-    juce::String infoText = 
-        "Configure how mouse movement affects MIDI expression.\n\n"
-        "Note Velocity: Controlled by mouse Y position\n"
-        "  (top = loud, bottom = quiet)\n\n"
-        "CC1 & CC11: Track mouse Y position continuously.\n"
-        "  Values update whenever the mouse moves.\n\n"
-        "Direction Change: Moving left\u2194right can retrigger notes\n"
-        "  to emulate accordion bellows direction change.\n\n"
-        "Curve affects how values respond to Y position.\n"
-        "Mouse tracking is global across entire desktop.";
-    
-    auto infoArea = getLocalBounds().reduced(20);
-    infoArea.removeFromTop(235);
-    
-    g.drawMultiLineText(infoText, infoArea.getX(), infoArea.getY(), 
-                        infoArea.getWidth(), juce::Justification::left);
+    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
+    g.setColour (juce::Colours::grey);
+    g.drawRect (getLocalBounds(), 2);
 }
 
 void MouseMidiSettingsWindow::resized()
 {
-    auto area = getLocalBounds().reduced(20);
-    
-    // Title
-    titleLabel.setBounds(area.removeFromTop(30));
-    area.removeFromTop(10);
-    
-    // CC1 Modulation setting
-    auto modulationArea = area.removeFromTop(25);
-    modulationCheckbox.setBounds(modulationArea.removeFromLeft(25));
-    modulationLabel.setBounds(modulationArea);
-    area.removeFromTop(10);
-    
-    // CC11 Expression setting
-    auto expressionArea = area.removeFromTop(25);
-    expressionCheckbox.setBounds(expressionArea.removeFromLeft(25));
-    expressionLabel.setBounds(expressionArea);
-    area.removeFromTop(10);
-    
-    // Direction-change retrigger setting
-    auto retriggerArea = area.removeFromTop(25);
-    retriggerCheckbox.setBounds(retriggerArea.removeFromLeft(25));
-    retriggerLabel.setBounds(retriggerArea);
-    area.removeFromTop(10);
-    
-    // Curve selector
-    auto curveArea = area.removeFromTop(25);
-    curveLabel.setBounds(curveArea.removeFromLeft(120));
-    curveSelector.setBounds(curveArea.reduced(5, 0));
-    area.removeFromTop(20);  // Extra space before button
-    
-    // Close button at bottom
-    auto buttonArea = getLocalBounds().reduced(20);
-    buttonArea = buttonArea.removeFromBottom(40);
-    closeButton.setBounds(buttonArea.withSizeKeepingCentre(100, 30));
+    const int m  = 15;   // outer margin
+    const int rh = 22;   // standard row height
+    const int sh = 16;   // section header height
+    const int g  =  6;   // gap between rows
+
+    auto area = getLocalBounds().reduced (m);
+
+    // ── Title ─────────────────────────────────────────────────────────────────
+    titleLabel.setBounds (area.removeFromTop (28));
+    area.removeFromTop (8);
+
+    // ── Mouse Expression section ──────────────────────────────────────────────
+    expressionSectionLabel.setBounds (area.removeFromTop (sh));
+    area.removeFromTop (4);
+
+    auto makeCheckRow = [&](juce::ToggleButton& cb, juce::Label& lbl)
+    {
+        auto row = area.removeFromTop (rh);
+        cb.setBounds  (row.removeFromLeft (22));
+        lbl.setBounds (row);
+        area.removeFromTop (g);
+    };
+    makeCheckRow (modulationCheckbox, modulationLabel);
+    makeCheckRow (expressionCheckbox, expressionLabel);
+    makeCheckRow (retriggerCheckbox,  retriggerLabel);
+
+    {
+        auto row = area.removeFromTop (rh);
+        curveLabel.setBounds    (row.removeFromLeft (120));
+        curveSelector.setBounds (row.reduced (2, 0));
+        area.removeFromTop (g);
+    }
+
+    // ── Close button ──────────────────────────────────────────────────────────
+    area.removeFromTop (12);
+    closeButton.setBounds (area.removeFromTop (30).withSizeKeepingCentre (100, 28));
 }

@@ -69,12 +69,31 @@ StraDellaMIDI_pluginAudioProcessorEditor::StraDellaMIDI_pluginAudioProcessorEdit
             aboutButton     .setInterceptsMouseClicks (false, false);
             mappingButton   .setInterceptsMouseClicks (false, false);
             expressionButton.setInterceptsMouseClicks (false, false);
+
+            // Expand window to fill the primary display so mouse events are
+            // captured from anywhere on screen.  The area outside the original
+            // plugin UI will be rendered at half-transparency.
+            originalWidth  = getWidth();
+            originalHeight = getHeight();
+            setOpaque (false);
+            auto* disp = juce::Desktop::getInstance().getDisplays().getPrimaryDisplay();
+            if (disp != nullptr)
+            {
+                setSize (disp->userArea.getWidth(), disp->userArea.getHeight());
+                setTopLeftPosition (0, 0);
+            }
         }
         else
         {
             aboutButton     .setInterceptsMouseClicks (true, true);
             mappingButton   .setInterceptsMouseClicks (true, true);
             expressionButton.setInterceptsMouseClicks (true, true);
+
+            // Restore original plugin size.
+            setOpaque (true);
+            if (originalWidth > 0 && originalHeight > 0)
+                setSize (originalWidth, originalHeight);
+            originalWidth = originalHeight = 0;
         }
     };
     addAndMakeVisible (focusButton);
@@ -122,13 +141,25 @@ StraDellaMIDI_pluginAudioProcessorEditor::StraDellaMIDI_pluginAudioProcessorEdit
     };
 
     aboutButton.onClick      = [makeDialog] { makeDialog ("About"); };
-    mappingButton.onClick    = [makeDialog] { makeDialog ("Mapping"); };
+
+    // Mapping button: show voicing settings.
+    mappingButton.onClick = [this]
+    {
+        juce::DialogWindow::LaunchOptions opts;
+        opts.content.setOwned (new MappingSettingsWindow (audioProcessor));
+        opts.dialogTitle                  = "Mapping Settings";
+        opts.dialogBackgroundColour       = juce::Colour (0xff2a2a3e);
+        opts.escapeKeyTriggersCloseButton = true;
+        opts.useNativeTitleBar            = false;
+        opts.resizable                    = false;
+        opts.launchAsync();
+    };
 
     // Expression button: show the MouseMidiSettingsWindow inside a dialog.
     expressionButton.onClick = [this]
     {
         juce::DialogWindow::LaunchOptions opts;
-        opts.content.setOwned (new MouseMidiSettingsWindow (mouseExpression));
+        opts.content.setOwned (new MouseMidiSettingsWindow (mouseExpression, audioProcessor));
         opts.dialogTitle                  = "Expression Settings";
         opts.dialogBackgroundColour       = juce::Colour (0xff2a2a3e);
         opts.escapeKeyTriggersCloseButton = true;
@@ -151,11 +182,14 @@ StraDellaMIDI_pluginAudioProcessorEditor::StraDellaMIDI_pluginAudioProcessorEdit
     mouseExpression.onDirectionChange = [this]
     {
         const int vel = mouseExpression.getCurrentNoteVelocity();
+        auto mods = juce::ModifierKeys::getCurrentModifiers();
+        const bool leftDown  = mods.isLeftButtonDown();
+        const bool rightDown = mods.isRightButtonDown();
 
         if (pressedRow >= 0)
         {
             audioProcessor.buttonReleased (pressedRow, pressedCol);
-            audioProcessor.buttonPressed  (pressedRow, pressedCol, vel);
+            audioProcessor.buttonPressed  (pressedRow, pressedCol, vel, leftDown, rightDown);
         }
 
         for (auto it = activeKeyRow.begin(); it != activeKeyRow.end(); ++it)
@@ -163,7 +197,7 @@ StraDellaMIDI_pluginAudioProcessorEditor::StraDellaMIDI_pluginAudioProcessorEdit
             const int row = it.getValue();
             const int col = activeKeyCol[it.getKey()];
             audioProcessor.buttonReleased (row, col);
-            audioProcessor.buttonPressed  (row, col, vel);
+            audioProcessor.buttonPressed  (row, col, vel, leftDown, rightDown);
         }
     };
 
@@ -234,8 +268,25 @@ StraDellaMIDI_pluginAudioProcessorEditor::rowColour (int row, bool pressed) cons
 //==============================================================================
 void StraDellaMIDI_pluginAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    // Background
-    g.fillAll (juce::Colour (0xff1a1a2e));
+    // When Focus mode has expanded the window to fill the screen, uiW/uiH define
+    // the original plugin UI area.  Everything outside is rendered as a
+    // semi-transparent overlay so the underlying desktop is dimly visible.
+    const int uiW = (focusActive && originalWidth  > 0) ? originalWidth  : getWidth();
+    const int uiH = (focusActive && originalHeight > 0) ? originalHeight : getHeight();
+
+    // Background for the original plugin area (fully opaque dark)
+    g.setColour (juce::Colour (0xff1a1a2e));
+    g.fillRect (0, 0, uiW, uiH);
+
+    // Semi-transparent dark overlay covering the expanded strips
+    if (getWidth() > uiW || getHeight() > uiH)
+    {
+        g.setColour (juce::Colour (0x80000000));   // black @ 50% alpha
+        if (getWidth() > uiW)
+            g.fillRect (uiW, 0, getWidth() - uiW, getHeight());    // right strip (full height)
+        if (getHeight() > uiH)
+            g.fillRect (0, uiH, uiW, getHeight() - uiH);           // bottom strip (left part only)
+    }
 
     // ── Branding / title area ────────────────────────────────────────────────
     {
@@ -244,7 +295,7 @@ void StraDellaMIDI_pluginAudioProcessorEditor::paint (juce::Graphics& g)
         g.setColour (juce::Colours::white);
         g.setFont (titleFont);
         g.drawFittedText ("straDella",
-                          0, 0, getWidth(), kTitleH - 18,
+                          0, 0, uiW, kTitleH - 18,
                           juce::Justification::centred, 1);
 
         // "by Papa Coyote" in smaller regular font below
@@ -252,7 +303,7 @@ void StraDellaMIDI_pluginAudioProcessorEditor::paint (juce::Graphics& g)
         g.setColour (juce::Colours::lightgrey);
         g.setFont (subFont);
         g.drawFittedText ("by Papa Coyote",
-                          0, kTitleH - 18, getWidth(), 16,
+                          0, kTitleH - 18, uiW, 16,
                           juce::Justification::centred, 1);
     }
 
@@ -318,19 +369,23 @@ void StraDellaMIDI_pluginAudioProcessorEditor::paint (juce::Graphics& g)
 
 void StraDellaMIDI_pluginAudioProcessorEditor::resized()
 {
-    const int totalW   = getWidth();
+    // When in full-screen Focus mode the window may be the size of the entire
+    // display.  Always lay out UI elements relative to the original plugin size
+    // so they remain in the same position.
+    const int uiW = (focusActive && originalWidth > 0) ? originalWidth : getWidth();
+
     const int btnAreaY = kTitleH + kHeaderH + Proc::NUM_ROWS * kBtnH + 5;
     const int btnH     = kBottomH - 8;
-    const int third    = (totalW - 8) / 3;
+    const int third    = (uiW - 8) / 3;
 
     // Top-row buttons sit inside the title area.
     static constexpr int kTopBtnY = 10;
     static constexpr int kTopBtnH = 36;
-    focusButton.setBounds (5,              kTopBtnY, 100, kTopBtnH);
-    panicButton.setBounds (totalW - 65,    kTopBtnY,  60, kTopBtnH);
+    focusButton.setBounds (5,           kTopBtnY, 100, kTopBtnH);
+    panicButton.setBounds (uiW - 65,    kTopBtnY,  60, kTopBtnH);
 
-    aboutButton     .setBounds (2,              btnAreaY, third,     btnH);
-    mappingButton   .setBounds (2 + third + 2,  btnAreaY, third,     btnH);
+    aboutButton     .setBounds (2,               btnAreaY, third,     btnH);
+    mappingButton   .setBounds (2 + third + 2,   btnAreaY, third,     btnH);
     expressionButton.setBounds (2 + 2 * (third + 2), btnAreaY, third + 2, btnH);
 }
 
@@ -353,6 +408,12 @@ void StraDellaMIDI_pluginAudioProcessorEditor::globalFocusChanged (juce::Compone
 //==============================================================================
 void StraDellaMIDI_pluginAudioProcessorEditor::mouseDown (const juce::MouseEvent& e)
 {
+    // In Focus mode the grid is driven exclusively by the computer keyboard.
+    // Mouse clicks on the grid are suppressed to prevent the double-trigger
+    // stuck-note scenario (mouse + keyboard pressing the same cell).
+    if (focusActive)
+        return;
+
     int row, col;
     hitTest (e.getPosition(), row, col);
 
@@ -360,7 +421,10 @@ void StraDellaMIDI_pluginAudioProcessorEditor::mouseDown (const juce::MouseEvent
     {
         pressedRow = row;
         pressedCol = col;
-        audioProcessor.buttonPressed (row, col, mouseExpression.getCurrentNoteVelocity());
+        const bool leftDown  = e.mods.isLeftButtonDown();
+        const bool rightDown = e.mods.isRightButtonDown();
+        audioProcessor.buttonPressed (row, col, mouseExpression.getCurrentNoteVelocity(),
+                                      leftDown, rightDown);
         repaint();
     }
 }
@@ -390,7 +454,9 @@ bool StraDellaMIDI_pluginAudioProcessorEditor::keyPressed (const juce::KeyPress&
         activeKeyRow.set (keyCode, row);
         activeKeyCol.set (keyCode, col);
         keyboardPressedGrid[row][col] = true;
-        audioProcessor.buttonPressed (row, col, mouseExpression.getCurrentNoteVelocity());
+        auto mods = juce::ModifierKeys::getCurrentModifiers();
+        audioProcessor.buttonPressed (row, col, mouseExpression.getCurrentNoteVelocity(),
+                                      mods.isLeftButtonDown(), mods.isRightButtonDown());
         repaint();
         return true;
     }

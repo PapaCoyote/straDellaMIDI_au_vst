@@ -202,7 +202,9 @@ bool StradellaKeyboardMapper::loadConfiguration (const juce::File& configFile)
 
     // Current section determines the KeyType for subsequent key=value lines.
     // Supported: [bass], [counterbass], [major], [minor]
+    // Other sections (e.g. [voicing]) are marked by setting skipSection = true.
     KeyType currentSection = KeyType::SingleNote;
+    bool    skipSection    = false;
 
     for (const auto& rawLine : lines)
     {
@@ -214,12 +216,18 @@ bool StradellaKeyboardMapper::loadConfiguration (const juce::File& configFile)
         if (line.startsWith ("["))
         {
             const auto name = line.substring (1, line.indexOf ("]")).trim().toLowerCase();
-            if      (name == "bass")                         currentSection = KeyType::SingleNote;
+            skipSection = false;
+            if      (name == "bass")                           currentSection = KeyType::SingleNote;
             else if (name == "counterbass" || name == "third") currentSection = KeyType::ThirdNote;
-            else if (name == "major")                        currentSection = KeyType::MajorChord;
-            else if (name == "minor")                        currentSection = KeyType::MinorChord;
+            else if (name == "major")                          currentSection = KeyType::MajorChord;
+            else if (name == "minor")                          currentSection = KeyType::MinorChord;
+            else                                               skipSection = true;  // unknown section (e.g. [voicing])
             continue;
         }
+
+        // Skip lines belonging to an unrecognised section.
+        if (skipSection)
+            continue;
 
         // key = note1[,note2,...] [# comment]
         const int eqPos = line.indexOf ("=");

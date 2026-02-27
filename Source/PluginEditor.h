@@ -21,6 +21,7 @@
 #include "StradellaKeyboardMapper.h"
 #include "MouseMidiExpression.h"
 #include "MouseMidiSettingsWindow.h"
+#include "MappingSettingsWindow.h"
 
 //==============================================================================
 class StraDellaMIDI_pluginAudioProcessorEditor  : public juce::AudioProcessorEditor,
@@ -80,6 +81,11 @@ private:
     juce::TextButton focusButton { "Focus" };   ///< toggle – captures keyboard & mouse focus
     juce::TextButton panicButton { "!" };       ///< sends All Notes Off on all channels
     bool             focusActive { false };     ///< mirrors focusButton toggle state
+
+    // Original plugin size stored when Focus mode expands the window to fill screen.
+    // Zero when not in full-screen focus mode.
+    int originalWidth  { 0 };
+    int originalHeight { 0 };
 
     // Layout constants (pixels)
     static constexpr int kTitleH    = 55;   // branding / title area height

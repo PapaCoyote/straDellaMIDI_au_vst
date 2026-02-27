@@ -32,6 +32,10 @@
             file="Source/MouseMidiSettingsWindow.cpp"/>
       <FILE id="mMs1F8" name="MouseMidiSettingsWindow.h" compile="0" resource="0"
             file="Source/MouseMidiSettingsWindow.h"/>
+      <FILE id="mMp1G9" name="MappingSettingsWindow.cpp" compile="1" resource="0"
+            file="Source/MappingSettingsWindow.cpp"/>
+      <FILE id="mMp1H0" name="MappingSettingsWindow.h" compile="0" resource="0"
+            file="Source/MappingSettingsWindow.h"/>
     </GROUP>
   </MAINGROUP>
   <MODULES>
