@@ -55,7 +55,60 @@ StraDellaMIDI_pluginAudioProcessorEditor::StraDellaMIDI_pluginAudioProcessorEdit
     setSize (w, h);
     setWantsKeyboardFocus (true);
 
-    // Bottom buttons – each opens a small movable dialog
+    // ── Focus toggle button ───────────────────────────────────────────────────
+    focusButton.setClickingTogglesState (true);
+    focusButton.setToggleState (false, juce::dontSendNotification);
+    focusButton.setColour (juce::TextButton::buttonColourId,   juce::Colour (0xff3a3a5e));
+    focusButton.setColour (juce::TextButton::buttonOnColourId, juce::Colour (0xff22aa44));
+    focusButton.onClick = [this]
+    {
+        focusActive = focusButton.getToggleState();
+        if (focusActive)
+        {
+            grabKeyboardFocus();
+            aboutButton     .setInterceptsMouseClicks (false, false);
+            mappingButton   .setInterceptsMouseClicks (false, false);
+            expressionButton.setInterceptsMouseClicks (false, false);
+        }
+        else
+        {
+            aboutButton     .setInterceptsMouseClicks (true, true);
+            mappingButton   .setInterceptsMouseClicks (true, true);
+            expressionButton.setInterceptsMouseClicks (true, true);
+        }
+    };
+    addAndMakeVisible (focusButton);
+
+    // ── Panic button ("!") ───────────────────────────────────────────────────
+    panicButton.setColour (juce::TextButton::buttonColourId,  juce::Colour (0xffcc2222));
+    panicButton.setColour (juce::TextButton::textColourOffId, juce::Colours::white);
+    panicButton.onClick = [this]
+    {
+        // Release any currently held mouse button.
+        if (pressedRow >= 0)
+        {
+            audioProcessor.buttonReleased (pressedRow, pressedCol);
+            pressedRow = pressedCol = -1;
+        }
+
+        // Release every key held via the computer keyboard.
+        for (auto it = activeKeyRow.begin(); it != activeKeyRow.end(); ++it)
+        {
+            const int row = it.getValue();
+            const int col = activeKeyCol[it.getKey()];
+            audioProcessor.buttonReleased (row, col);
+            keyboardPressedGrid[row][col] = false;
+        }
+        activeKeyRow.clear();
+        activeKeyCol.clear();
+
+        // Broadcast All Notes Off + All Sound Off on all MIDI channels.
+        audioProcessor.sendAllNotesOff();
+        repaint();
+    };
+    addAndMakeVisible (panicButton);
+
+    // ── Bottom buttons – each opens a small movable dialog ───────────────────
     auto makeDialog = [this](const juce::String& windowTitle)
     {
         juce::DialogWindow::LaunchOptions opts;
@@ -115,10 +168,14 @@ StraDellaMIDI_pluginAudioProcessorEditor::StraDellaMIDI_pluginAudioProcessorEdit
     };
 
     mouseExpression.startTracking();
+
+    // Register for global focus-change events so Focus mode can re-assert focus.
+    juce::Desktop::getInstance().addFocusChangeListener (this);
 }
 
 StraDellaMIDI_pluginAudioProcessorEditor::~StraDellaMIDI_pluginAudioProcessorEditor()
 {
+    juce::Desktop::getInstance().removeFocusChangeListener (this);
 }
 
 //==============================================================================
@@ -266,9 +323,31 @@ void StraDellaMIDI_pluginAudioProcessorEditor::resized()
     const int btnH     = kBottomH - 8;
     const int third    = (totalW - 8) / 3;
 
+    // Top-row buttons sit inside the title area.
+    static constexpr int kTopBtnY = 10;
+    static constexpr int kTopBtnH = 36;
+    focusButton.setBounds (5,              kTopBtnY, 100, kTopBtnH);
+    panicButton.setBounds (totalW - 65,    kTopBtnY,  60, kTopBtnH);
+
     aboutButton     .setBounds (2,              btnAreaY, third,     btnH);
     mappingButton   .setBounds (2 + third + 2,  btnAreaY, third,     btnH);
     expressionButton.setBounds (2 + 2 * (third + 2), btnAreaY, third + 2, btnH);
+}
+
+//==============================================================================
+void StraDellaMIDI_pluginAudioProcessorEditor::globalFocusChanged (juce::Component* focusedComponent)
+{
+    // When Focus mode is active, re-assert keyboard focus if it moves outside
+    // this component's hierarchy (e.g. to the DAW host UI).
+    if (!focusActive || focusedComponent == this || isParentOf (focusedComponent))
+        return;
+
+    juce::MessageManager::callAsync (
+        [safeThis = juce::Component::SafePointer<StraDellaMIDI_pluginAudioProcessorEditor> (this)]
+        {
+            if (safeThis != nullptr && safeThis->focusActive)
+                safeThis->grabKeyboardFocus();
+        });
 }
 
 //==============================================================================

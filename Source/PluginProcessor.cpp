@@ -183,6 +183,16 @@ void StraDellaMIDI_pluginAudioProcessor::addMidiMessage (const juce::MidiMessage
     pendingMessages.add (msg);
 }
 
+void StraDellaMIDI_pluginAudioProcessor::sendAllNotesOff()
+{
+    const juce::ScopedLock sl (messageLock);
+    for (int ch = 1; ch <= 16; ++ch)
+    {
+        pendingMessages.add (juce::MidiMessage::allNotesOff (ch));
+        pendingMessages.add (juce::MidiMessage::allSoundOff (ch));
+    }
+}
+
 //==============================================================================
 // This creates new instances of the plugin.
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()

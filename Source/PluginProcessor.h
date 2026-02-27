@@ -68,6 +68,9 @@ public:
     // Called to queue arbitrary MIDI messages (e.g. CC from mouse expression).
     void addMidiMessage (const juce::MidiMessage& msg);
 
+    // Sends All Notes Off + All Sound Off on all 16 MIDI channels (panic).
+    void sendAllNotesOff();
+
     // Static helpers – public so the editor can use them for labels.
     static juce::Array<int> getNotesForButton (int row, int col);
     static int              getRootNote        (int col);
