@@ -59,6 +59,24 @@ namespace
     static const char* kRowNames[StraDellaMIDI_pluginAudioProcessor::NUM_ROWS] = {
         "Third", "Bass", "Major", "Minor"
     };
+
+    // Move the lowest note up an octave for each inversion step.
+    // Notes array must be in ascending order on entry (always true for our chords:
+    // we build them as [base, base+3/4, base+7, base+10, base+14] in that order).
+    // After adding notes[0]+12 (always > notes.back() for standard chord intervals
+    // of ≤14 semitones) and removing notes[0], the array stays sorted.
+    static void applyInversion (juce::Array<int>& notes, int inversion)
+    {
+        jassert (inversion >= 0 && inversion <= 2);
+        for (int i = 0; i < inversion; ++i)
+        {
+            if (notes.size() < 2) break;
+            // notes[0] + 12 always lands above the existing highest note because
+            // the widest interval in our chords (root → 9th) is only 14 semitones.
+            notes.add (notes[0] + 12);
+            notes.remove (0);
+        }
+    }
 }
 
 //==============================================================================
@@ -87,19 +105,63 @@ juce::String StraDellaMIDI_pluginAudioProcessor::getThirdNoteName (int col)
 }
 
 // Returns the set of MIDI notes sounded when a given button is pressed.
-// Chord tones are voiced one octave above the bass root note.
-juce::Array<int> StraDellaMIDI_pluginAudioProcessor::getNotesForButton (int row, int col)
+// Chord tones are voiced one octave above the bass root note (plus any octave offset).
+// For the major and minor rows the chord type is extended when mouse buttons are held:
+//   left mouse down  → adds the 7th (dominant 7 / minor 7) when the setting is enabled
+//   right mouse down → adds the major 9th when the setting is enabled
+juce::Array<int> StraDellaMIDI_pluginAudioProcessor::getNotesForButton (
+        int row, int col, bool leftMouseDown, bool rightMouseDown) const
 {
-    const int root = kRootNotes[col];
-    const int chordRoot = root + 12; // one octave up for chord voicings
+    jassert (col >= 0 && col < NUM_COLUMNS);
+    jassert (row >= 0 && row < NUM_ROWS);
+
+    const int root      = kRootNotes[col];
+    const int octShift  = voicingSettings.octaveOffset[row] * 12;
 
     switch (row)
     {
-        case COUNTERBASS:  return { root + 4 };                              // major 3rd
-        case BASS:         return { root };                                  // root only
-        case MAJOR:        return { chordRoot, chordRoot + 4, chordRoot + 7, chordRoot + 10 }; // dominant 7th
-        case MINOR:        return { chordRoot, chordRoot + 3, chordRoot + 7, chordRoot + 10 }; // minor 7th
-        default:           return {};
+        case COUNTERBASS:
+            return { root + 4 + octShift };
+
+        case BASS:
+            return { root + octShift };
+
+        case MAJOR:
+        {
+            const int base       = root + 12 + octShift;
+            const bool addSev    = leftMouseDown  && voicingSettings.majorLeftMouseAdds7;
+            const bool addNinth  = rightMouseDown && voicingSettings.majorRightMouseAdds9;
+
+            juce::Array<int> notes;
+            notes.add (base);
+            notes.add (base + 4);   // major 3rd
+            notes.add (base + 7);   // perfect 5th
+            if (addSev)   notes.add (base + 10);  // minor 7th  → dominant 7
+            if (addNinth) notes.add (base + 14);  // major 9th
+
+            applyInversion (notes, voicingSettings.majorInversion);
+            return notes;
+        }
+
+        case MINOR:
+        {
+            const int base       = root + 12 + octShift;
+            const bool addSev    = leftMouseDown  && voicingSettings.minorLeftMouseAdds7;
+            const bool addNinth  = rightMouseDown && voicingSettings.minorRightMouseAdds9;
+
+            juce::Array<int> notes;
+            notes.add (base);
+            notes.add (base + 3);   // minor 3rd
+            notes.add (base + 7);   // perfect 5th
+            if (addSev)   notes.add (base + 10);  // minor 7th
+            if (addNinth) notes.add (base + 14);  // major 9th
+
+            applyInversion (notes, voicingSettings.minorInversion);
+            return notes;
+        }
+
+        default:
+            return {};
     }
 }
 
@@ -160,10 +222,13 @@ juce::AudioProcessorEditor* StraDellaMIDI_pluginAudioProcessor::createEditor()
 
 //==============================================================================
 // Called from the UI thread when a stradella button is clicked.
-void StraDellaMIDI_pluginAudioProcessor::buttonPressed (int row, int col, int velocity)
+void StraDellaMIDI_pluginAudioProcessor::buttonPressed (int row, int col, int velocity,
+                                                         bool leftMouseDown, bool rightMouseDown)
 {
-    const auto notes = getNotesForButton (row, col);
+    const auto notes = getNotesForButton (row, col, leftMouseDown, rightMouseDown);
+    const int  key   = row * 1000 + col;
     const juce::ScopedLock sl (messageLock);
+    activeNotes.set (key, notes);
     for (int note : notes)
         pendingMessages.add (juce::MidiMessage::noteOn (1, juce::jlimit (0, 127, note),
                                                         (juce::uint8) juce::jlimit (0, 127, velocity)));
@@ -171,10 +236,14 @@ void StraDellaMIDI_pluginAudioProcessor::buttonPressed (int row, int col, int ve
 
 void StraDellaMIDI_pluginAudioProcessor::buttonReleased (int row, int col)
 {
-    const auto notes = getNotesForButton (row, col);
+    const int key = row * 1000 + col;
     const juce::ScopedLock sl (messageLock);
-    for (int note : notes)
-        pendingMessages.add (juce::MidiMessage::noteOff (1, juce::jlimit (0, 127, note)));
+    if (activeNotes.contains (key))
+    {
+        for (int note : activeNotes[key])
+            pendingMessages.add (juce::MidiMessage::noteOff (1, juce::jlimit (0, 127, note)));
+        activeNotes.remove (key);
+    }
 }
 
 void StraDellaMIDI_pluginAudioProcessor::addMidiMessage (const juce::MidiMessage& msg)
@@ -186,6 +255,7 @@ void StraDellaMIDI_pluginAudioProcessor::addMidiMessage (const juce::MidiMessage
 void StraDellaMIDI_pluginAudioProcessor::sendAllNotesOff()
 {
     const juce::ScopedLock sl (messageLock);
+    activeNotes.clear();
     for (int ch = 1; ch <= 16; ++ch)
     {
         pendingMessages.add (juce::MidiMessage::allNotesOff (ch));

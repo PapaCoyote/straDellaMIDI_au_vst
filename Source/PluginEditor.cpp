@@ -128,7 +128,7 @@ StraDellaMIDI_pluginAudioProcessorEditor::StraDellaMIDI_pluginAudioProcessorEdit
     expressionButton.onClick = [this]
     {
         juce::DialogWindow::LaunchOptions opts;
-        opts.content.setOwned (new MouseMidiSettingsWindow (mouseExpression));
+        opts.content.setOwned (new MouseMidiSettingsWindow (mouseExpression, audioProcessor));
         opts.dialogTitle                  = "Expression Settings";
         opts.dialogBackgroundColour       = juce::Colour (0xff2a2a3e);
         opts.escapeKeyTriggersCloseButton = true;
@@ -151,11 +151,14 @@ StraDellaMIDI_pluginAudioProcessorEditor::StraDellaMIDI_pluginAudioProcessorEdit
     mouseExpression.onDirectionChange = [this]
     {
         const int vel = mouseExpression.getCurrentNoteVelocity();
+        auto mods = juce::ModifierKeys::getCurrentModifiers();
+        const bool leftDown  = mods.isLeftButtonDown();
+        const bool rightDown = mods.isRightButtonDown();
 
         if (pressedRow >= 0)
         {
             audioProcessor.buttonReleased (pressedRow, pressedCol);
-            audioProcessor.buttonPressed  (pressedRow, pressedCol, vel);
+            audioProcessor.buttonPressed  (pressedRow, pressedCol, vel, leftDown, rightDown);
         }
 
         for (auto it = activeKeyRow.begin(); it != activeKeyRow.end(); ++it)
@@ -163,7 +166,7 @@ StraDellaMIDI_pluginAudioProcessorEditor::StraDellaMIDI_pluginAudioProcessorEdit
             const int row = it.getValue();
             const int col = activeKeyCol[it.getKey()];
             audioProcessor.buttonReleased (row, col);
-            audioProcessor.buttonPressed  (row, col, vel);
+            audioProcessor.buttonPressed  (row, col, vel, leftDown, rightDown);
         }
     };
 
@@ -360,7 +363,10 @@ void StraDellaMIDI_pluginAudioProcessorEditor::mouseDown (const juce::MouseEvent
     {
         pressedRow = row;
         pressedCol = col;
-        audioProcessor.buttonPressed (row, col, mouseExpression.getCurrentNoteVelocity());
+        const bool leftDown  = e.mods.isLeftButtonDown();
+        const bool rightDown = e.mods.isRightButtonDown();
+        audioProcessor.buttonPressed (row, col, mouseExpression.getCurrentNoteVelocity(),
+                                      leftDown, rightDown);
         repaint();
     }
 }
@@ -390,7 +396,9 @@ bool StraDellaMIDI_pluginAudioProcessorEditor::keyPressed (const juce::KeyPress&
         activeKeyRow.set (keyCode, row);
         activeKeyCol.set (keyCode, col);
         keyboardPressedGrid[row][col] = true;
-        audioProcessor.buttonPressed (row, col, mouseExpression.getCurrentNoteVelocity());
+        auto mods = juce::ModifierKeys::getCurrentModifiers();
+        audioProcessor.buttonPressed (row, col, mouseExpression.getCurrentNoteVelocity(),
+                                      mods.isLeftButtonDown(), mods.isRightButtonDown());
         repaint();
         return true;
     }
