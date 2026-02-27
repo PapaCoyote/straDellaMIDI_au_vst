@@ -23,7 +23,8 @@
 #include "MouseMidiSettingsWindow.h"
 
 //==============================================================================
-class StraDellaMIDI_pluginAudioProcessorEditor  : public juce::AudioProcessorEditor
+class StraDellaMIDI_pluginAudioProcessorEditor  : public juce::AudioProcessorEditor,
+                                                  private juce::FocusChangeListener
 {
 public:
     explicit StraDellaMIDI_pluginAudioProcessorEditor (StraDellaMIDI_pluginAudioProcessor&);
@@ -40,6 +41,9 @@ public:
     bool keyStateChanged (bool isKeyDown)        override;
 
 private:
+    //==============================================================================
+    // FocusChangeListener: re-asserts keyboard focus when Focus mode is active.
+    void globalFocusChanged (juce::Component* focusedComponent) override;
     //==============================================================================
     // Layout helpers
     juce::Rectangle<int> buttonBounds (int row, int col) const;
@@ -71,6 +75,11 @@ private:
     juce::TextButton aboutButton      { "About" };
     juce::TextButton mappingButton    { "Mapping" };
     juce::TextButton expressionButton { "Expression" };
+
+    // Top action buttons
+    juce::TextButton focusButton { "Focus" };   ///< toggle – captures keyboard & mouse focus
+    juce::TextButton panicButton { "!" };       ///< sends All Notes Off on all channels
+    bool             focusActive { false };     ///< mirrors focusButton toggle state
 
     // Layout constants (pixels)
     static constexpr int kTitleH    = 55;   // branding / title area height
