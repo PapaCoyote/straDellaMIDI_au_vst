@@ -39,8 +39,10 @@ Bass notes are voiced in octave 2; chord tones are voiced one octave higher.
    and JUCE 8.x are both supported.
 2. **Projucer** — included with JUCE. Used to generate the Xcode project from the `.jucer` file.
 3. **Xcode** — version 14 or later recommended (macOS only).
-4. **macOS 11.0 (Big Sur) or later** — the AU format uses `kAudioUnitType_MIDIProcessor` (`aump`),
-   which requires macOS 11+. The VST3 format works on macOS 10.13+.
+4. **macOS 11.0 (Big Sur) or later** — both the AU and VST3 targets use a macOS 11.0 deployment
+   target. The AU format uses `kAudioUnitType_MIDIProcessor` (`aump`), which requires macOS 11+
+   at runtime. The JUCE 8 AU wrapper also uses macOS 11 APIs at compile time; building with an
+   earlier deployment target causes Xcode availability errors in the AU target only.
 
 ## Build Instructions — IMPORTANT: Projucer must be re-run first
 

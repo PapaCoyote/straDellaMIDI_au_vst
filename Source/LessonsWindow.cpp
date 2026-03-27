@@ -296,6 +296,9 @@ private:
 
     static juce::String getKeyChar (int row, int col)
     {
+        // The default keyboard layout covers 10 of the 12 circle-of-fifths columns
+        // (cols 0-9: Eb Bb F C G D A E B F#).  Columns 10-11 (Db, Ab) have no
+        // keyboard key assignments, so return an empty string for them.
         if (col < 0 || col > 9) return {};
 
         static const juce::String bassKeys[]  = { "q","w","e","r","t","y","u","i","o","p" };
@@ -977,6 +980,9 @@ juce::String LessonsWindow::getBuiltInLessonsText()
 //==============================================================================
 juce::String LessonsWindow::getKeyChar (int row, int col)
 {
+    // The default keyboard layout covers 10 of the 12 circle-of-fifths columns
+    // (cols 0-9: Eb Bb F C G D A E B F#).  Columns 10-11 (Db, Ab) have no
+    // keyboard key assignments, so return an empty string for them.
     if (col < 0 || col > 9) return {};
 
     static const juce::String bassKeys[]  = { "q","w","e","r","t","y","u","i","o","p" };
