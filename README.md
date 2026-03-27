@@ -35,7 +35,8 @@ Bass notes are voiced in octave 2; chord tones are voiced one octave higher.
 
 ## Prerequisites
 
-1. **JUCE** — download version **7.0.5 or later** from [juce.com](https://juce.com/get-juce/). JUCE 7.x is required.
+1. **JUCE** — download version **7.0.5 or later** from [juce.com](https://juce.com/get-juce/). JUCE 7.x
+   and JUCE 8.x are both supported.
 2. **Projucer** — included with JUCE. Used to generate the Xcode project from the `.jucer` file.
 3. **Xcode** — version 14 or later recommended (macOS only).
 4. **macOS 11.0 (Big Sur) or later** — the AU format uses `kAudioUnitType_MIDIProcessor` (`aump`),
@@ -55,8 +56,17 @@ Bass notes are voiced in octave 2; chord tones are voiced one octave higher.
    JUCE modules directory.
 4. **Save the project in Projucer** — this regenerates `Builds/MacOSX/straDellaMIDI_plugin.xcodeproj`
    and `JuceLibraryCode/JucePluginDefines.h`.
-5. In Xcode: **Product → Clean Build Folder** (⌥⇧⌘K), then build the **AU** target in **Release**.
-6. Xcode copies the built `.component` into `~/Library/Audio/Plug-Ins/Components/` automatically.
+5. In Xcode: **Product → Clean Build Folder** (⌥⇧⌘K), then build the target(s) you need in
+   **Release** mode:
+   - **straDellaMIDI_plugin - AU** — builds the `.component` and copies it to
+     `~/Library/Audio/Plug-Ins/Components/` for use in Logic Pro MIDI FX slots.
+   - **straDellaMIDI_plugin - VST3** — builds the `.vst3` bundle and copies it to
+     `~/Library/Audio/Plug-Ins/VST3/` for use in VST3-compatible DAWs.
+
+   > **Note:** The VST3 SDK is bundled inside JUCE (since JUCE 7). No separate Steinberg SDK
+   > download is required. If the VST3 target fails to build, ensure "Path to JUCE modules" in
+   > Projucer's **Global Paths** points to your JUCE installation's `modules/` folder so that
+   > the bundled SDK headers can be found.
 
 ## Using in Logic Pro
 
@@ -119,6 +129,23 @@ blocked. Remove the quarantine flag before scanning:
 sudo xattr -rd com.apple.quarantine \
   ~/Library/Audio/Plug-Ins/Components/straDellaMIDI_plugin.component
 ```
+
+## Using the VST3 in a DAW
+
+After building the **VST3** target, the `.vst3` bundle is placed in
+`~/Library/Audio/Plug-Ins/VST3/straDellaMIDI_plugin.vst3` (macOS default VST3 location).
+
+- In **Ableton Live**, **Reaper**, **Bitwig**, and other VST3-capable DAWs, rescan your
+  plugin folder after the first build.
+- The plugin appears in the **MIDI Effect** (or equivalent) category as
+  `Papa Coyote / straDellaMIDI_1.01`.
+- Insert it on a MIDI track and route MIDI output to a software instrument on another track.
+
+> If the VST3 quarantine flag needs clearing:
+> ```bash
+> sudo xattr -rd com.apple.quarantine \
+>   ~/Library/Audio/Plug-Ins/VST3/straDellaMIDI_plugin.vst3
+> ```
 
 ## Plugin Metadata
 
