@@ -16,13 +16,13 @@ void MouseMidiSettingsWindow::setupUI()
 {
     // ── Title ─────────────────────────────────────────────────────────────────
     titleLabel.setText ("Expression Settings", juce::dontSendNotification);
-    titleLabel.setFont (juce::Font (17.0f, juce::Font::bold));
+    titleLabel.setFont (juce::Font (juce::FontOptions (17.0f, juce::Font::bold)));
     titleLabel.setJustificationType (juce::Justification::centred);
     addAndMakeVisible (titleLabel);
 
     // ── Section header ────────────────────────────────────────────────────────
     expressionSectionLabel.setText ("Mouse Expression", juce::dontSendNotification);
-    expressionSectionLabel.setFont (juce::Font (12.0f, juce::Font::bold));
+    expressionSectionLabel.setFont (juce::Font (juce::FontOptions (12.0f, juce::Font::bold)));
     expressionSectionLabel.setColour (juce::Label::textColourId, juce::Colours::lightgrey);
     addAndMakeVisible (expressionSectionLabel);
 

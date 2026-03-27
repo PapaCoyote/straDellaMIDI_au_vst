@@ -40,7 +40,7 @@ void MappingSettingsWindow::setupUI()
 
     // ── Title ─────────────────────────────────────────────────────────────────
     titleLabel.setText ("Voicing Settings", juce::dontSendNotification);
-    titleLabel.setFont (juce::Font (17.0f, juce::Font::bold));
+    titleLabel.setFont (juce::Font (juce::FontOptions (17.0f, juce::Font::bold)));
     titleLabel.setJustificationType (juce::Justification::centred);
     addAndMakeVisible (titleLabel);
 
@@ -48,7 +48,7 @@ void MappingSettingsWindow::setupUI()
     auto makeSectionHeader = [this](juce::Label& lbl, const juce::String& text, juce::Colour colour)
     {
         lbl.setText (text, juce::dontSendNotification);
-        lbl.setFont (juce::Font (12.0f, juce::Font::bold));
+        lbl.setFont (juce::Font (juce::FontOptions (12.0f, juce::Font::bold)));
         lbl.setColour (juce::Label::textColourId, colour);
         addAndMakeVisible (lbl);
     };
