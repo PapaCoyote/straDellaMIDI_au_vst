@@ -1,0 +1,93 @@
+# straDellaMIDI Lesson File
+# ============================================================
+# This file demonstrates the lesson markup format.
+# Place .lesson files in ~/Library/Application Support/straDellaMIDI/lessons/
+# and they will be loaded automatically at startup.
+#
+# FORMAT
+# ------
+#   LESSON:      <title>
+#   DESCRIPTION: <one-line description shown in the selector>
+#
+#   TOPIC:  <topic title>
+#   TEXT:   <one line of explanatory text>
+#   TEXT:   <additional lines as needed>
+#   SCORE:  <rowname:colname pairs separated by spaces>
+#
+#   rowname : third | bass | major | minor
+#   colname : Eb Bb F C G D A E B F# Db Ab
+#
+# Multiple LESSON blocks may appear in one file.
+# Lines beginning with # are ignored.
+# ============================================================
+
+LESSON: Getting Started
+DESCRIPTION: An introduction to the Stradella bass system
+
+TOPIC: Welcome
+TEXT: Welcome to straDellaMIDI lessons!
+TEXT: The Stradella bass system is used on the left hand of the accordion.
+TEXT: You will learn bass notes, major chords, and minor chords.
+TEXT: Press the triangle (>) to hear a sequence, then play it yourself!
+SCORE: bass:C bass:G bass:F bass:C
+
+TOPIC: The Bass Row
+TEXT: The bass row plays the root note of each key.
+TEXT: Keyboard mapping (bass row):
+TEXT:   q=Eb  w=Bb  e=F  r=C  t=G  y=D  u=A  i=E  o=B  p=F#
+SCORE: bass:Eb bass:Bb bass:F bass:C
+
+TOPIC: More Bass Notes
+TEXT: Continue across the circle of fifths.
+SCORE: bass:G bass:D bass:A bass:E bass:B
+
+# ============================================================
+
+LESSON: Major Chords
+DESCRIPTION: Playing major chords with the orange row
+
+TOPIC: Introduction to Major Chords
+TEXT: The orange row plays a major triad: root, major 3rd, and perfect 5th.
+TEXT: Keyboard mapping (major row):
+TEXT:   a=Eb  s=Bb  d=F  f=C  g=G  h=D  j=A  k=E  l=B  ;=F#
+SCORE: major:C major:G major:F major:C
+
+TOPIC: I-IV-V in C major
+TEXT: C, F, and G major are the I, IV, and V chords in the key of C.
+TEXT: This three-chord progression underlies countless songs!
+SCORE: major:C major:F major:G major:C
+
+# ============================================================
+
+LESSON: Minor Chords
+DESCRIPTION: Playing minor chords with the blue row
+
+TOPIC: Introduction to Minor Chords
+TEXT: The blue row plays a minor triad: root, minor 3rd, and perfect 5th.
+TEXT: Keyboard mapping (minor row):
+TEXT:   z=Eb  x=Bb  c=F  v=C  b=G  n=D  m=A  ,=E  .=B  /=F#
+SCORE: minor:A minor:D minor:E minor:A
+
+TOPIC: Am-Dm-Em Progression
+TEXT: A minor, D minor, and E minor are common in the key of A minor.
+TEXT: This sad-sounding progression appears in many folk and pop songs.
+SCORE: minor:A minor:D minor:E minor:A
+
+# ============================================================
+
+LESSON: Mixing Bass and Chords
+DESCRIPTION: Combining bass notes with chords for a full accompaniment
+
+TOPIC: Bass then Chord
+TEXT: A common accordion pattern alternates a bass note with a chord.
+TEXT: Try: C bass, C major, G bass, G major.
+SCORE: bass:C major:C bass:G major:G
+
+TOPIC: Simple Waltz Pattern
+TEXT: In 3/4 time the left hand plays: bass note, chord, chord.
+TEXT: Here is one bar of a C major waltz, then one bar of G major.
+SCORE: bass:C major:C major:C bass:G major:G major:G
+
+TOPIC: Full I-IV-V Accompaniment
+TEXT: Now mix bass notes and chords for a complete I-IV-V progression.
+SCORE: bass:C major:C bass:F major:F bass:G major:G bass:C major:C

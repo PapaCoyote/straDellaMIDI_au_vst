@@ -36,6 +36,10 @@
             file="Source/MappingSettingsWindow.cpp"/>
       <FILE id="mMp1H0" name="MappingSettingsWindow.h" compile="0" resource="0"
             file="Source/MappingSettingsWindow.h"/>
+      <FILE id="lLw1I1" name="LessonsWindow.cpp" compile="1" resource="0"
+            file="Source/LessonsWindow.cpp"/>
+      <FILE id="lLw1J2" name="LessonsWindow.h" compile="0" resource="0"
+            file="Source/LessonsWindow.h"/>
     </GROUP>
   </MAINGROUP>
   <MODULES>
