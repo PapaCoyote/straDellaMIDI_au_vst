@@ -69,6 +69,7 @@ StraDellaMIDI_pluginAudioProcessorEditor::StraDellaMIDI_pluginAudioProcessorEdit
             aboutButton     .setInterceptsMouseClicks (false, false);
             mappingButton   .setInterceptsMouseClicks (false, false);
             expressionButton.setInterceptsMouseClicks (false, false);
+            lessonsButton   .setInterceptsMouseClicks (false, false);
 
             // Expand window to fill the primary display so mouse events are
             // captured from anywhere on screen.  The area outside the original
@@ -88,6 +89,7 @@ StraDellaMIDI_pluginAudioProcessorEditor::StraDellaMIDI_pluginAudioProcessorEdit
             aboutButton     .setInterceptsMouseClicks (true, true);
             mappingButton   .setInterceptsMouseClicks (true, true);
             expressionButton.setInterceptsMouseClicks (true, true);
+            lessonsButton   .setInterceptsMouseClicks (true, true);
 
             // Restore original plugin size.
             setOpaque (true);
@@ -97,6 +99,21 @@ StraDellaMIDI_pluginAudioProcessorEditor::StraDellaMIDI_pluginAudioProcessorEdit
         }
     };
     addAndMakeVisible (focusButton);
+
+    // ── Lessons button ────────────────────────────────────────────────────────
+    lessonsButton.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff2a4a7e));
+    lessonsButton.onClick = [this]
+    {
+        juce::DialogWindow::LaunchOptions opts;
+        opts.content.setOwned (new LessonsWindow (audioProcessor));
+        opts.dialogTitle                  = "Lessons";
+        opts.dialogBackgroundColour       = juce::Colour (0xff1a1a2e);
+        opts.escapeKeyTriggersCloseButton = true;
+        opts.useNativeTitleBar            = false;
+        opts.resizable                    = false;
+        opts.launchAsync();
+    };
+    addAndMakeVisible (lessonsButton);
 
     // ── Panic button ("!") ───────────────────────────────────────────────────
     panicButton.setColour (juce::TextButton::buttonColourId,  juce::Colour (0xffcc2222));
@@ -381,8 +398,9 @@ void StraDellaMIDI_pluginAudioProcessorEditor::resized()
     // Top-row buttons sit inside the title area.
     static constexpr int kTopBtnY = 10;
     static constexpr int kTopBtnH = 36;
-    focusButton.setBounds (5,           kTopBtnY, 100, kTopBtnH);
-    panicButton.setBounds (uiW - 65,    kTopBtnY,  60, kTopBtnH);
+    focusButton  .setBounds (5,           kTopBtnY, 100, kTopBtnH);
+    lessonsButton.setBounds (110,         kTopBtnY, 100, kTopBtnH);
+    panicButton  .setBounds (uiW - 65,    kTopBtnY,  60, kTopBtnH);
 
     aboutButton     .setBounds (2,               btnAreaY, third,     btnH);
     mappingButton   .setBounds (2 + third + 2,   btnAreaY, third,     btnH);

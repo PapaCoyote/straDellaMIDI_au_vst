@@ -22,6 +22,7 @@
 #include "MouseMidiExpression.h"
 #include "MouseMidiSettingsWindow.h"
 #include "MappingSettingsWindow.h"
+#include "LessonsWindow.h"
 
 //==============================================================================
 class StraDellaMIDI_pluginAudioProcessorEditor  : public juce::AudioProcessorEditor,
@@ -78,8 +79,9 @@ private:
     juce::TextButton expressionButton { "Expression" };
 
     // Top action buttons
-    juce::TextButton focusButton { "Focus" };   ///< toggle – captures keyboard & mouse focus
-    juce::TextButton panicButton { "!" };       ///< sends All Notes Off on all channels
+    juce::TextButton focusButton   { "Focus" };    ///< toggle – captures keyboard & mouse focus
+    juce::TextButton lessonsButton { "Lessons" };  ///< opens the interactive lessons window
+    juce::TextButton panicButton   { "!" };        ///< sends All Notes Off on all channels
     bool             focusActive { false };     ///< mirrors focusButton toggle state
 
     // Original plugin size stored when Focus mode expands the window to fill screen.

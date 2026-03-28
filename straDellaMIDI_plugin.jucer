@@ -9,7 +9,7 @@
               pluginWantsMidiIn="1" pluginProducesMidiOut="1" pluginIsMidiEffectPlugin="1"
               pluginEditorRequiresKeys="1" pluginAUExportPrefix="straDellaMIDI_pluginAU"
               pluginAUMainType="kAudioUnitType_MIDIProcessor" pluginVST3Category="Fx|MIDI"
-              bundleIdentifier="net.papacoyote.straDellaMIDI_plugin" pluginCharacteristicsValue="pluginIsMidiEffectPlugin,pluginProducesMidiOut,pluginWantsMidiIn"
+              bundleIdentifier="net.papacoyote.straDellaMIDI.plugin" pluginCharacteristicsValue="pluginIsMidiEffectPlugin,pluginProducesMidiOut,pluginWantsMidiIn"
               pluginAAXDisableBypass="0" pluginAAXDisableMultiMono="0" pluginAAXCategory="65536">
   <MAINGROUP id="chO3FN" name="straDellaMIDI">
     <GROUP id="{5E187DB7-58E1-AEA5-A7F8-0E52F2460308}" name="Source">
@@ -36,30 +36,36 @@
             file="Source/MappingSettingsWindow.cpp"/>
       <FILE id="mMp1H0" name="MappingSettingsWindow.h" compile="0" resource="0"
             file="Source/MappingSettingsWindow.h"/>
+      <FILE id="lLw1I1" name="LessonsWindow.cpp" compile="1" resource="0"
+            file="Source/LessonsWindow.cpp"/>
+      <FILE id="lLw1J2" name="LessonsWindow.h" compile="0" resource="0"
+            file="Source/LessonsWindow.h"/>
     </GROUP>
   </MAINGROUP>
   <MODULES>
-    <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
-    <MODULE id="juce_audio_devices" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_devices" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
     <MODULE id="juce_audio_plugin_client" showAllCode="1" useLocalCopy="0"
-            useGlobalPath="1"/>
-    <MODULE id="juce_audio_processors" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+            useGlobalPath="0"/>
+    <MODULE id="juce_audio_processors" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
     <MODULE id="juce_audio_processors_headless" showAllCode="1" useLocalCopy="0"
-            useGlobalPath="1"/>
-    <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
-    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
-    <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
-    <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
-    <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
-    <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+            useGlobalPath="0"/>
+    <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
   </MODULES>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
   <EXPORTFORMATS>
-    <XCODE_MAC targetFolder="Builds/MacOSX" bundleIdentifier="net.papacoyote.straDellaMIDI_plugin"
-               macOSDeploymentTarget="10.13">
+    <XCODE_MAC targetFolder="Builds/MacOSX" bundleIdentifier="net.papacoyote.straDellaMIDI.plugin"
+               macOSDeploymentTarget="11.0">
       <CONFIGURATIONS>
-        <CONFIGURATION isDebug="1" name="Debug" targetName="straDellaMIDI_plugin"/>
-        <CONFIGURATION isDebug="0" name="Release" targetName="straDellaMIDI_plugin"/>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="straDellaMIDI_plugin"
+                       xcodeExtraSettings="MACOSX_DEPLOYMENT_TARGET = 11.0;"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="straDellaMIDI_plugin"
+                       xcodeExtraSettings="MACOSX_DEPLOYMENT_TARGET = 11.0;"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_audio_basics" path="../modules"/>
