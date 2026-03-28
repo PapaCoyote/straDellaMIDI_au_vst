@@ -97,45 +97,33 @@ Select the **straDellaMIDI_plugin_AU** or **straDellaMIDI_plugin_VST3** scheme a
 > **Note:** If you are using this path and the AU does not build, switch to the CMake path
 > above — it is less error-prone.
 
-### Module paths — how they work after this fix
+### Module paths — how they work
 
-All modules in the `.jucer` now use **`useGlobalPath="0"`**, which means Projucer uses the
-committed relative path `../modules` (relative to the `.jucer` file).  This path resolves to
-the JUCE `modules/` directory for the standard install layout where this project lives
-_inside_ the JUCE folder (e.g. `~/JUCE/straDellaMIDI_au_vst/`):
+All modules in the `.jucer` use **`useGlobalPath="1"`**, which means Projucer finds JUCE
+via its globally configured path (set once in **Projucer → Global Paths…**).  This
+setting is stored in Projucer's own preferences on your machine — **git operations can
+never change it**, so module paths are always stable across pulls, fetches, and checkouts.
 
-```
-~/JUCE/                          ← JUCE root
-  modules/                       ← JUCE modules ← resolved by ../modules
-  straDellaMIDI_au_vst/          ← this project
-    straDellaMIDI_plugin.jucer
-```
+**One-time setup per machine:**
 
-If your JUCE is in a **different location**, fix the paths once in Projucer:
+1. Open Projucer and go to **Projucer → Global Paths…** (or **File → Global Paths…**).
+2. Set **"Path to JUCE"** to the root of your JUCE 8 installation (e.g. `~/JUCE`).
+3. Click **OK**.
 
-1. Open `straDellaMIDI_plugin.jucer` in Projucer.
-2. In the left-hand **Modules** panel, click each module that shows a warning icon.
-3. Uncheck "Use global path" and type the correct path to your JUCE `modules/` folder.
-4. **File → Save Project** (⌘S) — your paths are now committed to the `.jucer`.
+After this one-time setup, Projucer can always find the modules regardless of where you
+put the project on disk.
 
-> Because `useGlobalPath="0"` is now committed, this path change **survives git pulls**
-> — you should only need to do it once per machine.
+### ⚠️ If you see "modules not found"
 
-### ⚠️ If you see "modules not found" (Projucer global path not configured)
-
-If you never needed to set per-module paths before (i.e. Projucer used to find them
-automatically), your Projucer global JUCE path is not configured.  Either:
-
-- **Option A (preferred):** set the global path once — menu bar → **Projucer → Global Paths…**,
-  set "Path to JUCE" to your JUCE root (e.g. `~/JUCE`).  Then re-open the `.jucer`.
-- **Option B:** follow the three steps above ("fix the paths once in Projucer").
+Your Projucer global JUCE path has not been configured yet.  Follow the one-time setup
+above (set **Projucer → Global Paths… → Path to JUCE**).  Then re-open the `.jucer`.
 
 ### Steps
 
-> **Every time you clone the repo or pull changes you must open the `.jucer` in Projucer
-> and save it before building.** Projucer re-generates the Xcode project (deployment
-> target, AU type, module include paths, etc.) from the `.jucer` file. Skipping this
-> step is the most common cause of AU compilation failures.
+> **Every time you clone the repo, pull changes, or run `git reset --hard` you must open
+> the `.jucer` in Projucer and save it before building.** Projucer re-generates the Xcode
+> project (deployment target, AU type, module include paths, etc.) from the `.jucer` file.
+> Skipping this step is the most common cause of AU compilation failures.
 
 1. Open `straDellaMIDI_plugin.jucer` in Projucer.
 2. If any module shows a warning, fix its path (see above) then re-open.
@@ -240,7 +228,7 @@ attempt, here is what was actually happening:
 |---------|-------------|-------------|
 | `juce_audio_processors` and `juce_audio_plugin_client` show as **missing** in Projucer | `juce_audio_processors_headless` was accidentally removed from the `.jucer` MODULES list. `juce_audio_processors` declares it as a **required** dependency in its `juce_module_info`, so Projucer refuses to load `juce_audio_processors` (and by cascade `juce_audio_plugin_client`) when the required dep is absent. | Restored `juce_audio_processors_headless` to MODULES + MODULEPATHS, recreated `JuceLibraryCode/include_juce_audio_processors_headless.cpp/.mm`, restored its `#include` in `JuceHeader.h`. |
 | AU compilation availability errors (`'xxx' is only available on macOS 11.0`) | `macOSDeploymentTarget` was `"10.13"` in the original `.jucer`. `kAudioUnitType_MIDIProcessor` requires macOS 11; the JUCE 8 AU wrapper uses macOS-11 APIs. | Raised to `"11.0"` and reinforced via `xcodeExtraSettings="MACOSX_DEPLOYMENT_TARGET = 11.0;"` in each Xcode build configuration. |
-| Module paths reset on every `git pull` | All modules used `useGlobalPath="1"`, ignoring the committed `path="../modules"`. Any local Projucer path fix was wiped each pull. | Changed all modules to `useGlobalPath="0"`. |
+| Modules not found when project is at a non-standard location | A previous fix changed all modules to `useGlobalPath="0"` with `path="../modules"`. That relative path only resolves to `JUCE/modules/` when the project lives directly inside the JUCE root folder (`~/JUCE/straDellaMIDI_au_vst/`). Any other project location fails silently. | Reverted to `useGlobalPath="1"`. Projucer then uses its globally configured JUCE path (set once per machine in **Projucer → Global Paths…**), which git operations can never change. |
 | Invalid bundle identifier warning | Bundle ID contained `_` (`straDellaMIDI_plugin`), which is illegal in a UTI. | Changed to `net.papacoyote.straDellaMIDI.plugin` throughout. |
 
 **Did the Lessons class cause the AU failure?** No. The AU was already broken before
@@ -260,23 +248,20 @@ no Projucer regeneration.
 
 Work through these checks in order.
 
-### Check 0 — Projucer "modules not found" / "modules missing" error
+### Check 0 — Projucer global JUCE path not configured
 
-All modules now use `useGlobalPath="0"` with the committed relative path `../modules`.
-For the standard JUCE install layout (project inside `~/JUCE/`), this resolves correctly
-without any Projucer global-path setup.
+All modules use `useGlobalPath="1"`, which tells Projucer to find JUCE via its
+**globally configured path** (stored in Projucer's own preferences, not in the `.jucer`
+file).  This is the most reliable setting because git operations can **never** change
+Projucer's preferences — there is nothing to "reset" across pulls, fetches, or checkouts.
 
-If you still see "modules not found" after the fix:
+If you see "modules missing" or "modules not found" in Projucer:
 
-1. The modules path doesn't point to your JUCE `modules/` folder — open Projucer's
-   **Modules** tab, uncheck "Use global path" for the affected module, and type the correct
-   path.  Save the project.  The fix persists across git pulls.
-2. If your Projucer global JUCE path is configured, you can also fix it via
-   **Projucer → Global Paths…** → set "Path to JUCE" to the root of your JUCE install.
-
-> **Important:** "Attaching locally" via the Modules tab only sticks if `useGlobalPath` is
-> off.  With the old `useGlobalPath="1"` (fixed in this commit), every git pull silently
-> reset the path back to the global preference and any local attachment was lost.
+1. Open Projucer and go to **Projucer → Global Paths…** (or **File → Global Paths…**).
+2. Set **"Path to JUCE"** to the root of your JUCE 8 installation (e.g. `~/JUCE`).
+3. Click **OK** — this is a one-time setup per machine.
+4. Re-open `straDellaMIDI_plugin.jucer` — the warning icons should be gone.
+5. **File → Save Project** (⌘S) to regenerate the Xcode project.
 
 ### Check 1 — macOS deployment target
 
@@ -297,12 +282,44 @@ deployment target in all targets — AU, VST3, and any others — regardless of 
 version. If you still see availability errors, **do a clean build** (Product → Clean Build
 Folder in Xcode, or delete the `build/` directory for CMake) before rebuilding.
 
-### Check 2 — Stale Xcode project (Projucer path only)
+### Check 2 — Stale Xcode project after `git fetch` / `git reset` / `git pull`
 
-The `Builds/` directory is in `.gitignore`. Every time you pull changes you must
-re-open the `.jucer` in Projucer and **save** to regenerate the Xcode project.
-Building from a project generated before recent fixes is the most common cause of
-"AU does not build" even after the source-code changes are applied.
+> **This is the most common cause of "AU does not build" even when all source-code
+> fixes are present.**
+
+The `Builds/` directory is listed in `.gitignore`.  This means **no git operation
+ever touches the Xcode project** — not `git pull`, not `git fetch`, not
+`git reset --hard`, not `git checkout`.  After any git operation that changes source
+files or the `.jucer`, you **must** regenerate the Xcode project manually by re-saving
+in Projucer.
+
+#### Why `git fetch` + `git reset --hard` is not enough on its own
+
+```
+git fetch origin                            # downloads new commits — does NOT change your files
+git reset --hard origin/<branch-name>       # updates your files — does NOT regenerate Builds/
+```
+
+After step 2 you have the correct source files but an **old Xcode project** that does
+not know about:
+* the new `macOSDeploymentTarget = 11.0` setting
+* the new `LessonsWindow.cpp` compilation unit
+* any other `.jucer` changes made since the project was last saved in Projucer
+
+Building that old project will fail for the AU target (deployment target mismatch,
+missing symbols) even though the VST3 target may appear to work because the VST3
+wrapper is less sensitive to the deployment target at compile time.
+
+#### Required steps after every `git fetch + reset` or `git pull`
+
+1. `git fetch origin && git reset --hard origin/<branch-name>`
+   (or `git pull` — same outcome for source files; replace `<branch-name>` with the
+   branch you are working on, e.g. `main` or `copilot/add-lessons-functionality`)
+2. Open **`straDellaMIDI_plugin.jucer`** in Projucer.
+3. Confirm no module warnings appear (see Check 0 if they do).
+4. **File → Save Project** (⌘S) — Projucer regenerates `Builds/MacOSX/straDellaMIDI_plugin.xcodeproj`.
+5. In Xcode: **Product → Clean Build Folder** (⌥⇧⌘K).
+6. Select the **`straDellaMIDI_plugin - AU`** scheme and build in **Release** mode.
 
 ### Check 3 — Wrong Xcode scheme
 
