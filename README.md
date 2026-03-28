@@ -97,26 +97,38 @@ Select the **straDellaMIDI_plugin_AU** or **straDellaMIDI_plugin_VST3** scheme a
 > **Note:** If you are using this path and the AU does not build, switch to the CMake path
 > above — it is less error-prone.
 
-### ⚠️ Step 0 — Set the Projucer Global JUCE Path (one-time, required)
+### Module paths — how they work after this fix
 
-Every fresh Projucer install starts with no JUCE path configured.  If you skip this step,
-Projucer shows **"modules not found"** when you open the `.jucer` — that is the entire reason
-for that error, and setting the global path is the only fix.
+All modules in the `.jucer` now use **`useGlobalPath="0"`**, which means Projucer uses the
+committed relative path `../modules` (relative to the `.jucer` file).  This path resolves to
+the JUCE `modules/` directory for the standard install layout where this project lives
+_inside_ the JUCE folder (e.g. `~/JUCE/straDellaMIDI_au_vst/`):
 
-1. **Open Projucer** (the Projucer app, not Xcode).
-2. **macOS:** menu bar → **Projucer → Global Paths…**  
-   **Windows/Linux:** menu bar → **File → Global Paths…**
-3. In the "Path to JUCE" field, enter the path to the root of your JUCE installation  
-   (the folder that *contains* the `modules/` subfolder).  
-   Examples:
-   - `~/JUCE` (if you installed JUCE to your home directory)
-   - `/Applications/JUCE` (system-wide install)
-   - `C:\JUCE` (Windows)
-4. Click **OK** / close the dialog. Projucer will now find all JUCE modules automatically.
+```
+~/JUCE/                          ← JUCE root
+  modules/                       ← JUCE modules ← resolved by ../modules
+  straDellaMIDI_au_vst/          ← this project
+    straDellaMIDI_plugin.jucer
+```
 
-> **You only need to do this once per machine.** Projucer saves the global path in its own
-> preferences, not in the `.jucer` file. All future JUCE projects on the same machine will
-> use the same setting.
+If your JUCE is in a **different location**, fix the paths once in Projucer:
+
+1. Open `straDellaMIDI_plugin.jucer` in Projucer.
+2. In the left-hand **Modules** panel, click each module that shows a warning icon.
+3. Uncheck "Use global path" and type the correct path to your JUCE `modules/` folder.
+4. **File → Save Project** (⌘S) — your paths are now committed to the `.jucer`.
+
+> Because `useGlobalPath="0"` is now committed, this path change **survives git pulls**
+> — you should only need to do it once per machine.
+
+### ⚠️ If you see "modules not found" (Projucer global path not configured)
+
+If you never needed to set per-module paths before (i.e. Projucer used to find them
+automatically), your Projucer global JUCE path is not configured.  Either:
+
+- **Option A (preferred):** set the global path once — menu bar → **Projucer → Global Paths…**,
+  set "Path to JUCE" to your JUCE root (e.g. `~/JUCE`).  Then re-open the `.jucer`.
+- **Option B:** follow the three steps above ("fix the paths once in Projucer").
 
 ### Steps
 
@@ -126,7 +138,7 @@ for that error, and setting the global path is the only fix.
 > step is the most common cause of AU compilation failures.
 
 1. Open `straDellaMIDI_plugin.jucer` in Projucer.
-2. If Projucer shows "modules not found": complete **Step 0** above, then re-open the `.jucer`.
+2. If any module shows a warning, fix its path (see above) then re-open.
 3. **File → Save Project** (⌘S) — this regenerates `Builds/MacOSX/straDellaMIDI_plugin.xcodeproj`.
 4. In Xcode: **Product → Clean Build Folder** (⌥⇧⌘K).
 5. Select the **straDellaMIDI_plugin - AU** or **straDellaMIDI_plugin - VST3** scheme and build
@@ -223,10 +235,21 @@ Work through these checks in order.
 
 ### Check 0 — Projucer "modules not found" / "modules missing" error
 
-If Projucer shows this warning when you open the `.jucer`, your Projucer global JUCE path
-is not configured.  **Fix: see "Step 0 — Set the Projucer Global JUCE Path" in the Projucer
-build section above.**  Do NOT try to attach modules one by one in the module list — set the
-global JUCE path first, then re-open the project.
+All modules now use `useGlobalPath="0"` with the committed relative path `../modules`.
+For the standard JUCE install layout (project inside `~/JUCE/`), this resolves correctly
+without any Projucer global-path setup.
+
+If you still see "modules not found" after the fix:
+
+1. The modules path doesn't point to your JUCE `modules/` folder — open Projucer's
+   **Modules** tab, uncheck "Use global path" for the affected module, and type the correct
+   path.  Save the project.  The fix persists across git pulls.
+2. If your Projucer global JUCE path is configured, you can also fix it via
+   **Projucer → Global Paths…** → set "Path to JUCE" to the root of your JUCE install.
+
+> **Important:** "Attaching locally" via the Modules tab only sticks if `useGlobalPath` is
+> off.  With the old `useGlobalPath="1"` (fixed in this commit), every git pull silently
+> reset the path back to the global preference and any local attachment was lost.
 
 ### Check 1 — macOS deployment target
 
@@ -250,9 +273,9 @@ Folder in Xcode, or delete the `build/` directory for CMake) before rebuilding.
 ### Check 2 — Stale Xcode project (Projucer path only)
 
 The `Builds/` directory is in `.gitignore`. Every time you pull changes you must
-re-open the `.jucer` in Projucer, set the JUCE global path, and **save** to regenerate
-the Xcode project. Building from a project generated before recent fixes is the most
-common cause of "AU does not build" even after the source-code changes are applied.
+re-open the `.jucer` in Projucer and **save** to regenerate the Xcode project.
+Building from a project generated before recent fixes is the most common cause of
+"AU does not build" even after the source-code changes are applied.
 
 ### Check 3 — Wrong Xcode scheme
 
@@ -274,7 +297,7 @@ auval -v aump Vb4d Manu
 ```
 
 A `FAIL` result from `auval` will contain the exact reason. Common causes:
-* **Wrong bundle identifier** — must be `net.papacoyote.straDellaMIDI_plugin`
+* **Wrong bundle identifier** — must be `net.papacoyote.straDellaMIDI.plugin`
 * **Wrong AU type / subtype / manufacturer codes** — must be `aump / Vb4d / Manu`
 * **Runtime crash** — run `auval -v aump Vb4d Manu 2>&1 | tee /tmp/auval.log` and
   inspect the log for stack traces.
@@ -308,7 +331,7 @@ cp -R \
 | Manufacturer Code | `Manu` |
 | Plugin Code | `Vb4d` |
 | AU Type | `aump` (MIDI Processor — Logic MIDI FX slot) |
-| Bundle ID | `net.papacoyote.straDellaMIDI_plugin` |
+| Bundle ID | `net.papacoyote.straDellaMIDI.plugin` |
 | VST3 Category | `Fx\|MIDI` |
 | Formats | AU, VST3 |
 | macOS minimum | 11.0 (Big Sur) |

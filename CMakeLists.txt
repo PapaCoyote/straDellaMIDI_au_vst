@@ -52,7 +52,7 @@ juce_add_plugin(straDellaMIDI_plugin
     # Identity
     COMPANY_NAME              "Papa Coyote"
     COMPANY_WEBSITE           "www.papacoyote.net"
-    BUNDLE_ID                 "net.papacoyote.straDellaMIDI_plugin"
+    BUNDLE_ID                 "net.papacoyote.straDellaMIDI.plugin"
     PLUGIN_MANUFACTURER_CODE  Manu       # must be exactly 4 chars, upper-case first
     PLUGIN_CODE               Vb4d       # must be exactly 4 chars
 

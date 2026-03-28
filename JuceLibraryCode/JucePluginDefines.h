@@ -110,7 +110,7 @@
  #define JucePlugin_AUManufacturerCode     JucePlugin_ManufacturerCode
 #endif
 #ifndef  JucePlugin_CFBundleIdentifier
- #define JucePlugin_CFBundleIdentifier     net.papacoyote.straDellaMIDI_plugin
+ #define JucePlugin_CFBundleIdentifier     net.papacoyote.straDellaMIDI.plugin
 #endif
 #ifndef  JucePlugin_AAXIdentifier
  #define JucePlugin_AAXIdentifier          com.PapacoyoteLLC.straDellaMIDI
