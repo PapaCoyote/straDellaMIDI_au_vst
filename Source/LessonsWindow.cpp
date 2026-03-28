@@ -304,7 +304,7 @@ private:
         static const juce::String bassKeys[]  = { "q","w","e","r","t","y","u","i","o","p" };
         static const juce::String cbKeys[]    = { "1","2","3","4","5","6","7","8","9","0" };
         static const juce::String majorKeys[] = { "a","s","d","f","g","h","j","k","l",";" };
-        static const juce::String minorKeys[] = { "z","x","c","v","b","n","m",",",".","/"}; // col 9 = F#
+        static const juce::String minorKeys[] = { "z","x","c","v","b","n","m",",",".","/"}; // cols 0-9: Eb Bb F C G D A E B F#
 
         switch (row)
         {
@@ -988,7 +988,7 @@ juce::String LessonsWindow::getKeyChar (int row, int col)
     static const juce::String bassKeys[]  = { "q","w","e","r","t","y","u","i","o","p" };
     static const juce::String cbKeys[]    = { "1","2","3","4","5","6","7","8","9","0" };
     static const juce::String majorKeys[] = { "a","s","d","f","g","h","j","k","l",";" };
-    static const juce::String minorKeys[] = { "z","x","c","v","b","n","m",",",".","/"}; // col 9 = F#
+    static const juce::String minorKeys[] = { "z","x","c","v","b","n","m",",",".","/"}; // cols 0-9: Eb Bb F C G D A E B F#
 
     switch (row)
     {

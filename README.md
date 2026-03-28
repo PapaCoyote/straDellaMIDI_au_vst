@@ -231,6 +231,33 @@ After building the **VST3** target, the `.vst3` bundle is placed in
 
 ## Troubleshooting: AU does not build
 
+### Root cause analysis (history of this PR)
+
+If you have been following this PR and the AU has been failing to build on every
+attempt, here is what was actually happening:
+
+| Symptom | Actual cause | Fix applied |
+|---------|-------------|-------------|
+| `juce_audio_processors` and `juce_audio_plugin_client` show as **missing** in Projucer | `juce_audio_processors_headless` was accidentally removed from the `.jucer` MODULES list. `juce_audio_processors` declares it as a **required** dependency in its `juce_module_info`, so Projucer refuses to load `juce_audio_processors` (and by cascade `juce_audio_plugin_client`) when the required dep is absent. | Restored `juce_audio_processors_headless` to MODULES + MODULEPATHS, recreated `JuceLibraryCode/include_juce_audio_processors_headless.cpp/.mm`, restored its `#include` in `JuceHeader.h`. |
+| AU compilation availability errors (`'xxx' is only available on macOS 11.0`) | `macOSDeploymentTarget` was `"10.13"` in the original `.jucer`. `kAudioUnitType_MIDIProcessor` requires macOS 11; the JUCE 8 AU wrapper uses macOS-11 APIs. | Raised to `"11.0"` and reinforced via `xcodeExtraSettings="MACOSX_DEPLOYMENT_TARGET = 11.0;"` in each Xcode build configuration. |
+| Module paths reset on every `git pull` | All modules used `useGlobalPath="1"`, ignoring the committed `path="../modules"`. Any local Projucer path fix was wiped each pull. | Changed all modules to `useGlobalPath="0"`. |
+| Invalid bundle identifier warning | Bundle ID contained `_` (`straDellaMIDI_plugin`), which is illegal in a UTI. | Changed to `net.papacoyote.straDellaMIDI.plugin` throughout. |
+
+**Did the Lessons class cause the AU failure?** No. The AU was already broken before
+the Lessons feature was added (the `macOSDeploymentTarget="10.13"` pre-existing issue
+existed in the repo before any Lessons work started). The Lessons C++ code compiles
+cleanly for both AU and VST3 targets.
+
+**Did the VST3 fix PR break the AU?** No. The VST3 fix PR only changed two `Font`
+constructor calls (`juce::Font(...)` → `juce::Font(juce::FontOptions(...))`) in
+`MouseMidiSettingsWindow.cpp` and `MappingSettingsWindow.cpp`. It made no changes to
+any build configuration, and those two source files compile identically for AU and VST3.
+
+**Should you abandon this PR?** No. All known configuration issues are now fixed.
+After pulling the latest commit and regenerating the Xcode project (see Check 2 below)
+the AU should build correctly. The CMake path is the most reliable option — it requires
+no Projucer regeneration.
+
 Work through these checks in order.
 
 ### Check 0 — Projucer "modules not found" / "modules missing" error
