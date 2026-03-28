@@ -228,13 +228,22 @@ attempt, here is what was actually happening:
 |---------|-------------|-------------|
 | `juce_audio_processors` and `juce_audio_plugin_client` show as **missing** in Projucer | `juce_audio_processors_headless` was accidentally removed from the `.jucer` MODULES list. `juce_audio_processors` declares it as a **required** dependency in its `juce_module_info`, so Projucer refuses to load `juce_audio_processors` (and by cascade `juce_audio_plugin_client`) when the required dep is absent. | Restored `juce_audio_processors_headless` to MODULES + MODULEPATHS, recreated `JuceLibraryCode/include_juce_audio_processors_headless.cpp/.mm`, restored its `#include` in `JuceHeader.h`. |
 | AU compilation availability errors (`'xxx' is only available on macOS 11.0`) | `macOSDeploymentTarget` was `"10.13"` in the original `.jucer`. `kAudioUnitType_MIDIProcessor` requires macOS 11; the JUCE 8 AU wrapper uses macOS-11 APIs. | Raised to `"11.0"` and reinforced via `xcodeExtraSettings="MACOSX_DEPLOYMENT_TARGET = 11.0;"` in each Xcode build configuration. |
-| Modules not found when project is at a non-standard location | A previous fix changed all modules to `useGlobalPath="0"` with `path="../modules"`. That relative path only resolves to `JUCE/modules/` when the project lives directly inside the JUCE root folder (`~/JUCE/straDellaMIDI_au_vst/`). Any other project location fails silently. | Reverted to `useGlobalPath="1"`. Projucer then uses its globally configured JUCE path (set once per machine in **Projucer → Global Paths…**), which git operations can never change. |
+| Modules not found | All modules use `useGlobalPath="1"` (identical to `main`). Projucer resolves modules via its globally configured JUCE path — set once in **Projucer → Global Paths…**. This setting is stored in Projucer's application preferences and is unaffected by any git operation. For the standard project layout (`~/JUCE/straDellaMIDI_au_vst/`), `useGlobalPath="0"` with `path="../modules"` also resolves to `~/JUCE/modules/` and works equally well. | Both settings work for the standard layout; `"1"` is used for consistency with `main`. One-time Projucer global-path setup required (see Check 0). |
 | Invalid bundle identifier warning | Bundle ID contained `_` (`straDellaMIDI_plugin`), which is illegal in a UTI. | Changed to `net.papacoyote.straDellaMIDI.plugin` throughout. |
 
-**Did the Lessons class cause the AU failure?** No. The AU was already broken before
-the Lessons feature was added (the `macOSDeploymentTarget="10.13"` pre-existing issue
-existed in the repo before any Lessons work started). The Lessons C++ code compiles
-cleanly for both AU and VST3 targets.
+**Did the Lessons class cause the AU failure?** The Lessons C++ code itself is correct
+and compiles cleanly for both AU and VST3 targets.  However, because `PluginEditor.cpp`
+now calls `new LessonsWindow(...)`, **a stale Xcode project that pre-dates this PR will
+fail to link** — both AU and VST3 — with errors like:
+
+```
+Undefined symbol: LessonsWindow::LessonsWindow(StraDellaMIDI_pluginAudioProcessor&)
+```
+
+This is because `LessonsWindow.cpp` was introduced by this PR, and a Xcode project
+generated before this PR (e.g. from `main`) does not include it as a compile source.
+**This is not a code bug** — it is a stale Xcode project issue that is completely
+fixed by re-saving in Projucer (see Check 2).
 
 **Did the VST3 fix PR break the AU?** No. The VST3 fix PR only changed two `Font`
 constructor calls (`juce::Font(...)` → `juce::Font(juce::FontOptions(...))`) in
@@ -303,12 +312,20 @@ git reset --hard origin/<branch-name>       # updates your files — does NOT re
 After step 2 you have the correct source files but an **old Xcode project** that does
 not know about:
 * the new `macOSDeploymentTarget = 11.0` setting
-* the new `LessonsWindow.cpp` compilation unit
+* the new `LessonsWindow.cpp` compilation unit (introduced by this PR)
 * any other `.jucer` changes made since the project was last saved in Projucer
 
-Building that old project will fail for the AU target (deployment target mismatch,
-missing symbols) even though the VST3 target may appear to work because the VST3
-wrapper is less sensitive to the deployment target at compile time.
+Because `PluginEditor.cpp` now calls `new LessonsWindow(...)`, building that old project
+will fail to **link** with **both** the AU and VST3 targets:
+
+```
+Undefined symbol: LessonsWindow::LessonsWindow(StraDellaMIDI_pluginAudioProcessor&)
+```
+
+`main` compiles cleanly because `main`'s `PluginEditor.cpp` has no reference to
+`LessonsWindow` at all — so a stale project from `main` links fine.  After resetting
+to this PR branch, the source references `LessonsWindow` but the stale project does
+not compile it → linker failure on every build target.
 
 #### Required steps after every `git fetch + reset` or `git pull`
 
