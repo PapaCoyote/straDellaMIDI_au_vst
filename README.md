@@ -335,3 +335,30 @@ cp -R \
 | VST3 Category | `Fx\|MIDI` |
 | Formats | AU, VST3 |
 | macOS minimum | 11.0 (Big Sur) |
+
+### Bundle ID migration note
+
+The bundle identifier was corrected from `net.papacoyote.straDellaMIDI_plugin` (contained
+an underscore, which is invalid in a UTI) to `net.papacoyote.straDellaMIDI.plugin`.
+
+If you had the **old** plugin installed before this fix, macOS and Logic Pro will treat the
+old and new bundle IDs as **two different plugins**.  To clean up:
+
+1. **Remove the old .component** if present:
+
+   ```bash
+   rm -rf ~/Library/Audio/Plug-Ins/Components/straDellaMIDI_plugin.component
+   ```
+
+2. **Remove the old .vst3** if present:
+
+   ```bash
+   rm -rf ~/Library/Audio/Plug-Ins/VST3/straDellaMIDI_plugin.vst3
+   ```
+
+3. In **Logic Pro**, open **Logic → Preferences → Plug-in Manager**, find any stale
+   `straDellaMIDI_1.01` entry, and click **Reset & Rescan All** after installing the
+   newly-built plugin.
+
+4. **Rebuild** the plugin from the updated source and copy the new `.component` /
+   `.vst3` bundles to the install locations.
