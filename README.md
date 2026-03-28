@@ -97,13 +97,36 @@ Select the **straDellaMIDI_plugin_AU** or **straDellaMIDI_plugin_VST3** scheme a
 > **Note:** If you are using this path and the AU does not build, switch to the CMake path
 > above — it is less error-prone.
 
+### ⚠️ Step 0 — Set the Projucer Global JUCE Path (one-time, required)
+
+Every fresh Projucer install starts with no JUCE path configured.  If you skip this step,
+Projucer shows **"modules not found"** when you open the `.jucer` — that is the entire reason
+for that error, and setting the global path is the only fix.
+
+1. **Open Projucer** (the Projucer app, not Xcode).
+2. **macOS:** menu bar → **Projucer → Global Paths…**  
+   **Windows/Linux:** menu bar → **File → Global Paths…**
+3. In the "Path to JUCE" field, enter the path to the root of your JUCE installation  
+   (the folder that *contains* the `modules/` subfolder).  
+   Examples:
+   - `~/JUCE` (if you installed JUCE to your home directory)
+   - `/Applications/JUCE` (system-wide install)
+   - `C:\JUCE` (Windows)
+4. Click **OK** / close the dialog. Projucer will now find all JUCE modules automatically.
+
+> **You only need to do this once per machine.** Projucer saves the global path in its own
+> preferences, not in the `.jucer` file. All future JUCE projects on the same machine will
+> use the same setting.
+
+### Steps
+
 > **Every time you clone the repo or pull changes you must open the `.jucer` in Projucer
 > and save it before building.** Projucer re-generates the Xcode project (deployment
 > target, AU type, module include paths, etc.) from the `.jucer` file. Skipping this
 > step is the most common cause of AU compilation failures.
 
 1. Open `straDellaMIDI_plugin.jucer` in Projucer.
-2. Go to **Projucer → Global Paths** and set "Path to JUCE" to your JUCE root directory.
+2. If Projucer shows "modules not found": complete **Step 0** above, then re-open the `.jucer`.
 3. **File → Save Project** (⌘S) — this regenerates `Builds/MacOSX/straDellaMIDI_plugin.xcodeproj`.
 4. In Xcode: **Product → Clean Build Folder** (⌥⇧⌘K).
 5. Select the **straDellaMIDI_plugin - AU** or **straDellaMIDI_plugin - VST3** scheme and build
@@ -198,6 +221,13 @@ After building the **VST3** target, the `.vst3` bundle is placed in
 
 Work through these checks in order.
 
+### Check 0 — Projucer "modules not found" / "modules missing" error
+
+If Projucer shows this warning when you open the `.jucer`, your Projucer global JUCE path
+is not configured.  **Fix: see "Step 0 — Set the Projucer Global JUCE Path" in the Projucer
+build section above.**  Do NOT try to attach modules one by one in the module list — set the
+global JUCE path first, then re-open the project.
+
 ### Check 1 — macOS deployment target
 
 The AU build **requires macOS 11.0 as the deployment target**. With a lower target the
@@ -209,10 +239,13 @@ error: 'xxx' is only available on macOS 11.0 or newer
 
 **CMake fix:** the `CMakeLists.txt` hard-codes `11.0` — no action needed.
 
-**Projucer fix:** After opening the `.jucer` file and saving the project in Projucer,
-the generated Xcode project will have deployment target `11.0`. If you have a stale
-project from before this fix was committed, you **must** re-save with Projucer or
-the deployment target in the Xcode project settings will still be the old value.
+**Projucer fix:** The `.jucer` specifies `macOSDeploymentTarget="11.0"` **and** injects
+`MACOSX_DEPLOYMENT_TARGET = 11.0` directly into each Xcode build configuration via
+`xcodeExtraSettings` (visible in the XCODE_MAC/CONFIGURATION elements if you open the
+`.jucer` in a text editor). After re-saving in Projucer this forces the correct
+deployment target in all targets — AU, VST3, and any others — regardless of Projucer
+version. If you still see availability errors, **do a clean build** (Product → Clean Build
+Folder in Xcode, or delete the `build/` directory for CMake) before rebuilding.
 
 ### Check 2 — Stale Xcode project (Projucer path only)
 
