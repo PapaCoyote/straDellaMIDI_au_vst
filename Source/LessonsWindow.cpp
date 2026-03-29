@@ -8,8 +8,49 @@
 */
 
 #include "LessonsWindow.h"
+#include "StradellaKeyboardMapper.h"
 
 using Proc = StraDellaMIDI_pluginAudioProcessor;
+
+//==============================================================================
+// Score helpers – shared by LessonPanel (display) and LessonsWindow (logic).
+//==============================================================================
+
+/** Counts only playable notes in a score, ignoring layout sentinels. */
+static int countNotes (const juce::Array<LessonScoreNote>& score) noexcept
+{
+    int n = 0;
+    for (const auto& note : score)
+        if (note.isNote()) ++n;
+    return n;
+}
+
+/**
+    Returns the flat-array index of the nth playable note (0-based), or -1 if
+    nth is out of range.  Sentinels do not advance the count.
+*/
+static int findNthNote (const juce::Array<LessonScoreNote>& score, int nth) noexcept
+{
+    int count = 0;
+    for (int si = 0; si < score.size(); ++si)
+    {
+        if (score[si].isNote())
+        {
+            if (count == nth) return si;
+            ++count;
+        }
+    }
+    return -1;
+}
+
+/** Returns the number of display lines in a score (1 + number of line-break sentinels). */
+static int countScoreLines (const juce::Array<LessonScoreNote>& score) noexcept
+{
+    int lines = 1;
+    for (const auto& n : score)
+        if (n.isLineBreak()) ++lines;
+    return lines;
+}
 
 //==============================================================================
 // LessonPanel – inner scrollable component for rendering lesson content.
@@ -133,11 +174,8 @@ public:
             // ── Score area ────────────────────────────────────────────────────
             if (!topic.score.isEmpty())
             {
-                const int  scoreY     = layout.scoreY;
+                const int  scoreY      = layout.scoreY;
                 const bool isThisTopic = (state.playbackTopicIdx == ti);
-                const bool isFlashing  = (state.flashOn
-                                          && state.userTopicIdx == ti
-                                          && state.userNoteIdx >= topic.score.size());
 
                 // ── Play / pause button (triangle) ────────────────────────────
                 const int  by    = scoreY + (kScoreAreaH - kPlayBtnSize) / 2;
@@ -154,25 +192,49 @@ public:
                 g.fillPath (tri);
 
                 // ── Score notes ───────────────────────────────────────────────
-                for (int ni = 0; ni < topic.score.size(); ++ni)
+                const bool isFlashing = (state.flashOn
+                                         && state.userTopicIdx == ti
+                                         && state.userNoteIdx >= countNotes (topic.score));
+
+                int nx = kMargin + kPlayBtnSize + kScoreGap;
+                int lineIdx = 0;   // current display line (incremented by line-break sentinels)
+                int ni = 0;        // actual note index (sentinels excluded)
+
+                for (const auto& sn : topic.score)
                 {
-                    const auto& note = topic.score.getReference (ni);
-                    const int   nx   = kMargin + kPlayBtnSize + kScoreGap
-                                       + ni * (kScoreNoteW + kScoreNoteGap);
-                    const int   ny   = scoreY + (kScoreAreaH - kScoreNoteH) / 2;
+                    // ── Layout sentinels ──────────────────────────────────────
+                    if (sn.isLineBreak())
+                    {
+                        nx = kMargin + kPlayBtnSize + kScoreGap;
+                        ++lineIdx;
+                        continue;
+                    }
+                    if (sn.isSpace())
+                    {
+                        nx += kScoreSpaceW;
+                        continue;
+                    }
+
+                    // ── Playable note ─────────────────────────────────────────
+                    const int ny   = scoreY + lineIdx * kScoreAreaH
+                                     + (kScoreAreaH - kScoreNoteH) / 2;
 
                     const bool isHighlighted = isThisTopic && (state.highlightedNoteIdx == ni);
                     const bool isPlayed      = (ti < state.userTopicIdx)
                                            || (ti == state.userTopicIdx && ni < state.userNoteIdx);
+
+                    // Show note/chord name when highlighted, already played, or flashing;
+                    // otherwise show the keyboard key character.
+                    const bool showNoteName  = isHighlighted || isPlayed || isFlashing;
 
                     const int expand = isHighlighted ? 5 : 0;
                     const juce::Rectangle<int> noteBounds (
                         nx - expand / 2, ny - expand / 2,
                         kScoreNoteW + expand, kScoreNoteH + expand);
 
-                    juce::Colour nc = rowColour (note.row);
-                    if (isFlashing)        nc = nc.brighter (0.8f);
-                    else if (isPlayed)     nc = nc.withAlpha (0.45f);
+                    juce::Colour nc = rowColour (sn.row);
+                    if (isFlashing)       nc = nc.brighter (0.8f);
+                    else if (isPlayed)    nc = nc.withAlpha (0.45f);
 
                     g.setColour (nc);
                     g.fillRoundedRectangle (noteBounds.toFloat(), 4.0f);
@@ -181,37 +243,41 @@ public:
                                                : juce::Colour (0xff505050));
                     g.drawRoundedRectangle (noteBounds.toFloat(), 4.0f, 1.0f);
 
-                    // Label: keyboard key when highlighted, note name otherwise
+                    // Label: keyboard key by default; note name when highlighted/played/flashing
                     g.setColour (juce::Colours::black);
-                    const juce::String label = isHighlighted
-                                             ? getKeyChar (note.row, note.col)
-                                             : Proc::getColumnName (note.col);
-                    g.setFont (isHighlighted ? keyFont : noteFont);
+                    const juce::String label = showNoteName
+                                             ? Proc::getColumnName (sn.col)
+                                             : StradellaKeyboardMapper::getKeyLabel (sn.row, sn.col);
+                    g.setFont (showNoteName ? noteFont : keyFont);
                     g.drawFittedText (label,
-                                      noteBounds.withTrimmedBottom (isHighlighted ? 0 : 10)
+                                      noteBounds.withTrimmedBottom (showNoteName ? 10 : 0)
                                                .reduced (2),
                                       juce::Justification::centred, 1);
 
-                    // Row-type abbreviation (small text at bottom of note box)
-                    if (!isHighlighted)
+                    // Row-type abbreviation at bottom — only shown with the note name
+                    if (showNoteName)
                     {
                         g.setFont (smallFont);
                         g.setColour (juce::Colours::black.withAlpha (0.55f));
-                        g.drawFittedText (rowAbbrev (note.row),
+                        g.drawFittedText (rowAbbrev (sn.row),
                                           juce::Rectangle<int> (nx, ny + kScoreNoteH - 11,
                                                                  kScoreNoteW, 11),
                                           juce::Justification::centred, 1);
                     }
+
+                    nx += kScoreNoteW + kScoreNoteGap;
+                    ++ni;
                 }
 
                 // ── "Try again" message ───────────────────────────────────────
                 if (state.tryAgain && state.userTopicIdx == ti)
                 {
+                    const int numLines = countScoreLines (topic.score);
                     g.setColour (juce::Colour (0xffff7777));
                     g.setFont (textFont);
                     g.drawText ("Try again",
                                 kMargin + kPlayBtnSize + kScoreGap,
-                                scoreY + kScoreAreaH + 2,
+                                scoreY + numLines * kScoreAreaH + 2,
                                 120, 18,
                                 juce::Justification::centredLeft);
                 }
@@ -257,8 +323,9 @@ private:
 
             if (!topic.score.isEmpty())
             {
-                // Add score area height + small gap for "Try again" message
-                y += kScoreAreaH + kTryAgainH;
+                // Add score area height for each display line + "try again" gap.
+                const int numLines = countScoreLines (topic.score);
+                y += numLines * kScoreAreaH + kTryAgainH;
             }
 
             tl.height = y - tl.y;
@@ -294,28 +361,6 @@ private:
         }
     }
 
-    static juce::String getKeyChar (int row, int col)
-    {
-        // The default keyboard layout covers 10 of the 12 circle-of-fifths columns
-        // (cols 0-9: Eb Bb F C G D A E B F#).  Columns 10-11 (Db, Ab) have no
-        // keyboard key assignments, so return an empty string for them.
-        if (col < 0 || col > 9) return {};
-
-        static const juce::String bassKeys[]  = { "q","w","e","r","t","y","u","i","o","p" };
-        static const juce::String cbKeys[]    = { "1","2","3","4","5","6","7","8","9","0" };
-        static const juce::String majorKeys[] = { "a","s","d","f","g","h","j","k","l",";" };
-        static const juce::String minorKeys[] = { "z","x","c","v","b","n","m",",",".","/"}; // cols 0-9: Eb Bb F C G D A E B F#
-
-        switch (row)
-        {
-            case 0: return cbKeys   [col];
-            case 1: return bassKeys [col];
-            case 2: return majorKeys[col];
-            case 3: return minorKeys[col];
-            default: return {};
-        }
-    }
-
     //==========================================================================
     // Layout constants (pixels)
     static constexpr int kMargin      = 12;
@@ -323,12 +368,13 @@ private:
     static constexpr int kTopicGap    = 28;
     static constexpr int kTopicTitleH = 28;
     static constexpr int kTextLineH   = 20;
-    static constexpr int kScoreAreaH  = 58;
+    static constexpr int kScoreAreaH  = 58;   ///< height of one score display line
     static constexpr int kScoreNoteW  = 50;
     static constexpr int kScoreNoteH  = 40;
     static constexpr int kPlayBtnSize = 26;
     static constexpr int kScoreGap    = 10;
     static constexpr int kScoreNoteGap=  4;
+    static constexpr int kScoreSpaceW = 24;   ///< extra x-gap inserted by a '-' group separator
     static constexpr int kTryAgainH   = 22;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LessonPanel)
@@ -388,9 +434,9 @@ LessonsWindow::~LessonsWindow()
     if (playbackTopicIdx >= 0 && playbackPhase && currentLessonIdx >= 0)
     {
         const auto& topic = lessons[currentLessonIdx].topics[playbackTopicIdx];
-        if (playbackNoteIdx < topic.score.size())
-            audioProcessor.buttonReleased (topic.score[playbackNoteIdx].row,
-                                           topic.score[playbackNoteIdx].col);
+        const int si = findNthNote (topic.score, playbackNoteIdx);
+        if (si >= 0)
+            audioProcessor.buttonReleased (topic.score[si].row, topic.score[si].col);
     }
     // Release any keyboard-held notes
     for (auto it = activeKeyRow.begin(); it != activeKeyRow.end(); ++it)
@@ -559,9 +605,9 @@ void LessonsWindow::stopPlayback()
             && currentLessonIdx >= 0)
         {
             const auto& topic = lessons[currentLessonIdx].topics[playbackTopicIdx];
-            if (playbackNoteIdx < topic.score.size())
-                audioProcessor.buttonReleased (topic.score[playbackNoteIdx].row,
-                                               topic.score[playbackNoteIdx].col);
+            const int si = findNthNote (topic.score, playbackNoteIdx);
+            if (si >= 0)
+                audioProcessor.buttonReleased (topic.score[si].row, topic.score[si].col);
         }
     }
 
@@ -598,19 +644,26 @@ void LessonsWindow::onPlayTick()
 
     const auto& topic = lessons[currentLessonIdx].topics[playbackTopicIdx];
 
-    if (playbackNoteIdx >= topic.score.size())
+    if (playbackNoteIdx >= countNotes (topic.score))
     {
         stopPlayback();
         return;
     }
 
-    const auto& note = topic.score[playbackNoteIdx];
+    const int si = findNthNote (topic.score, playbackNoteIdx);
+    if (si < 0)
+    {
+        stopPlayback();
+        return;
+    }
+
+    const auto& note = topic.score[si];
 
     if (!playbackPhase)
     {
         // ── Note-on ──────────────────────────────────────────────────────────
         audioProcessor.buttonPressed (note.row, note.col, 100);
-        highlightedNoteIdx = playbackNoteIdx;
+        highlightedNoteIdx = playbackNoteIdx;   // actual note index
         playbackPhase = true;
     }
     else
@@ -621,7 +674,7 @@ void LessonsWindow::onPlayTick()
         ++playbackNoteIdx;
         playbackPhase = false;
 
-        if (playbackNoteIdx >= topic.score.size())
+        if (playbackNoteIdx >= countNotes (topic.score))
         {
             // All notes played – stop playback cleanly
             const int prevTopic = playbackTopicIdx;
@@ -739,15 +792,18 @@ void LessonsWindow::handleNotePress (int row, int col)
     // Already flash-animating a correct answer – ignore input
     if (timerMode == TimerMode::Flash) return;
 
+    const int si = findNthNote (topic.score, userNoteIdx);
+    if (si < 0) return;
+
     const LessonScoreNote pressed { row, col };
-    const auto& expected = topic.score[userNoteIdx];
+    const auto& expected = topic.score[si];
 
     if (pressed == expected)
     {
         ++userNoteIdx;
         tryAgain = false;
 
-        if (userNoteIdx >= topic.score.size())
+        if (userNoteIdx >= countNotes (topic.score))
             onScoreComplete();
         else
             refreshPanel();
@@ -864,30 +920,70 @@ juce::Array<LessonData> LessonsWindow::parseLessons (const juce::String& text)
         else if (line.startsWith ("SCORE:"))
         {
             const auto scoreStr = line.substring (6).trim();
-            juce::StringArray tokens;
-            tokens.addTokens (scoreStr, " ", "");
-
             juce::Array<LessonScoreNote> score;
-            for (const auto& token : tokens)
+
+            if (scoreStr.containsChar (':'))
             {
-                const int colon = token.indexOf (":");
-                if (colon <= 0) continue;
+                // ── Legacy format: "rowname:colname" tokens separated by spaces ──
+                // e.g.  bass:C  major:G  minor:A  bass:F
+                juce::StringArray tokens;
+                tokens.addTokens (scoreStr, " ", "");
 
-                const auto rowStr = token.substring (0, colon).trim().toLowerCase();
-                const auto colStr = token.substring (colon + 1).trim();
+                for (const auto& token : tokens)
+                {
+                    const int colon = token.indexOf (":");
+                    if (colon <= 0) continue;
 
-                int row = -1;
-                if      (rowStr == "third" || rowStr == "counterbass") row = 0;
-                else if (rowStr == "bass")                             row = 1;
-                else if (rowStr == "major")                            row = 2;
-                else if (rowStr == "minor")                            row = 3;
+                    const auto rowStr = token.substring (0, colon).trim().toLowerCase();
+                    const auto colStr = token.substring (colon + 1).trim();
 
-                int col = -1;
-                for (int c = 0; c < 12; ++c)
-                    if (colStr.equalsIgnoreCase (colNames[c])) { col = c; break; }
+                    int row = -1;
+                    if      (rowStr == "third" || rowStr == "counterbass") row = 0;
+                    else if (rowStr == "bass")                             row = 1;
+                    else if (rowStr == "major")                            row = 2;
+                    else if (rowStr == "minor")                            row = 3;
 
-                if (row >= 0 && col >= 0)
-                    score.add ({ row, col });
+                    int col = -1;
+                    for (int c = 0; c < 12; ++c)
+                        if (colStr.equalsIgnoreCase (colNames[c])) { col = c; break; }
+
+                    if (row >= 0 && col >= 0)
+                        score.add ({ row, col });
+                }
+            }
+            else
+            {
+                // ── Compact format: keyboard characters + layout markers ───────
+                // Each character is the keyboard key that plays the note/chord.
+                //   -  (dash)  → group-space sentinel
+                //   |  (pipe)  → line-break sentinel
+                // e.g.  rftf-rftf|tgyg-tgyg
+                static const int bassKeys[]  = { 'q','w','e','r','t','y','u','i','o','p' };
+                static const int cbKeys[]    = { '1','2','3','4','5','6','7','8','9','0' };
+                static const int majorKeys[] = { 'a','s','d','f','g','h','j','k','l',';' };
+                static const int minorKeys[] = { 'z','x','c','v','b','n','m',',','.','/' };
+
+                for (int ci = 0; ci < scoreStr.length(); ++ci)
+                {
+                    const int ch = (int)(juce::juce_wchar) scoreStr[ci];
+
+                    if (ch == '-') { score.add ({ -2, -1 }); continue; }  // group-space
+                    if (ch == '|') { score.add ({ -3, -1 }); continue; }  // line-break
+                    if (ch == ' ') continue;                               // ignored
+
+                    const int lower = (ch >= 'A' && ch <= 'Z') ? ch + ('a' - 'A') : ch;
+                    int row = -1, col = -1;
+                    for (int ki = 0; ki < 10; ++ki)
+                    {
+                        if (lower == bassKeys [ki]) { row = 1; col = ki; break; }
+                        if (lower == cbKeys   [ki]) { row = 0; col = ki; break; }
+                        if (lower == majorKeys[ki]) { row = 2; col = ki; break; }
+                        if (lower == minorKeys[ki]) { row = 3; col = ki; break; }
+                    }
+
+                    if (row >= 0 && col >= 0)
+                        score.add ({ row, col });
+                }
             }
 
             if (!score.isEmpty())
@@ -908,28 +1004,29 @@ juce::String LessonsWindow::getBuiltInLessonsText()
         "# straDellaMIDI Built-in Lessons\n"
         "# ================================\n"
         "# Format: LESSON / DESCRIPTION / TOPIC / TEXT / SCORE\n"
-        "# SCORE tokens: rowname:colname  (e.g. bass:C  major:G  minor:A)\n"
-        "# rowname : third | bass | major | minor\n"
-        "# colname : Eb Bb F C G D A E B F# Db Ab\n"
+        "# SCORE: keyboard characters map directly to accordion buttons.\n"
+        "#   - (dash) separates note groups; | (pipe) starts a new score line.\n"
+        "#   e.g.  SCORE: rf-tg   means bass:C chord:C – bass:G chord:G\n"
+        "# Legacy colon format still accepted: SCORE: bass:C major:G minor:A\n"
         "\n"
         "LESSON: Getting Started\n"
         "DESCRIPTION: An introduction to the Stradella bass system\n"
         "\n"
         "TOPIC: Welcome\n"
         "TEXT: Welcome to straDellaMIDI lessons!\n"
-        "TEXT: The Stradella bass system is used on the left hand of the accordion.\n"
-        "TEXT: You will learn bass notes, major chords, and minor chords.\n"
+        "TEXT: Each button shows its keyboard key. Hover over it to reveal the note name.\n"
         "TEXT: Press the triangle (>) to hear a sequence, then play it yourself!\n"
-        "SCORE: bass:C bass:G bass:F bass:C\n"
+        "TEXT: When you play a note correctly it reveals its name; complete the score to keep them.\n"
+        "SCORE: rter\n"
         "\n"
         "TOPIC: The Bass Row\n"
         "TEXT: The bass row plays the root note of each key.\n"
         "TEXT: Keyboard: q=Eb  w=Bb  e=F  r=C  t=G  y=D  u=A  i=E  o=B  p=F#\n"
-        "SCORE: bass:Eb bass:Bb bass:F bass:C\n"
+        "SCORE: qwer\n"
         "\n"
         "TOPIC: More Bass Notes\n"
         "TEXT: Continue across the circle of fifths.\n"
-        "SCORE: bass:G bass:D bass:A bass:E bass:B\n"
+        "SCORE: tyuio\n"
         "\n"
         "LESSON: Major Chords\n"
         "DESCRIPTION: Playing major chords with the orange row\n"
@@ -937,16 +1034,16 @@ juce::String LessonsWindow::getBuiltInLessonsText()
         "TOPIC: Introduction to Major Chords\n"
         "TEXT: The orange row plays a major triad: root, major 3rd, and perfect 5th.\n"
         "TEXT: Keyboard: a=Eb  s=Bb  d=F  f=C  g=G  h=D  j=A  k=E  l=B  ;=F#\n"
-        "SCORE: major:C major:G major:F major:C\n"
+        "SCORE: fgdf\n"
         "\n"
         "TOPIC: I-IV-V in C major\n"
         "TEXT: C, F, and G major are the I, IV, and V chords in the key of C.\n"
         "TEXT: This progression is used in countless songs!\n"
-        "SCORE: major:C major:F major:G major:C\n"
+        "SCORE: fdgf\n"
         "\n"
         "TOPIC: Practice\n"
         "TEXT: Play these four major chords in sequence.\n"
-        "SCORE: major:C major:D major:E major:G\n"
+        "SCORE: fhkg\n"
         "\n"
         "LESSON: Minor Chords\n"
         "DESCRIPTION: Playing minor chords with the blue row\n"
@@ -954,11 +1051,11 @@ juce::String LessonsWindow::getBuiltInLessonsText()
         "TOPIC: Introduction to Minor Chords\n"
         "TEXT: The blue row plays a minor triad: root, minor 3rd, and perfect 5th.\n"
         "TEXT: Keyboard: z=Eb  x=Bb  c=F  v=C  b=G  n=D  m=A  ,=E  .=B  /=F#\n"
-        "SCORE: minor:A minor:D minor:E minor:A\n"
+        "SCORE: mn,m\n"
         "\n"
         "TOPIC: Am-Dm-Em Progression\n"
         "TEXT: A minor, D minor, and E minor are common in the key of A minor.\n"
-        "SCORE: minor:A minor:D minor:E minor:A\n"
+        "SCORE: mn,m\n"
         "\n"
         "LESSON: Mixing Bass and Chords\n"
         "DESCRIPTION: Combining bass notes with chords\n"
@@ -966,36 +1063,16 @@ juce::String LessonsWindow::getBuiltInLessonsText()
         "TOPIC: Bass then Chord\n"
         "TEXT: A common accordion pattern is to alternate bass notes with chords.\n"
         "TEXT: Try: C bass, then C major, then G bass, then G major.\n"
-        "SCORE: bass:C major:C bass:G major:G\n"
+        "SCORE: rf-tg\n"
         "\n"
         "TOPIC: Simple Waltz Pattern\n"
         "TEXT: The waltz uses one bass note then two chords per bar.\n"
         "TEXT: Try the C waltz: C bass, C major, C major.\n"
-        "SCORE: bass:C major:C major:C bass:G major:G major:G\n"
+        "SCORE: rff-tgg\n"
+        "\n"
+        "TOPIC: Full I-IV-V Accompaniment\n"
+        "TEXT: Mix bass notes and chords for a complete I-IV-V progression.\n"
+        "TEXT: The dash (-) separates beat groups; the pipe (|) separates bars.\n"
+        "SCORE: rf-ed|tg-rf\n"
     );
-}
-
-//==============================================================================
-// Static helper: keyboard key character for a given (row, col) pair
-//==============================================================================
-juce::String LessonsWindow::getKeyChar (int row, int col)
-{
-    // The default keyboard layout covers 10 of the 12 circle-of-fifths columns
-    // (cols 0-9: Eb Bb F C G D A E B F#).  Columns 10-11 (Db, Ab) have no
-    // keyboard key assignments, so return an empty string for them.
-    if (col < 0 || col > 9) return {};
-
-    static const juce::String bassKeys[]  = { "q","w","e","r","t","y","u","i","o","p" };
-    static const juce::String cbKeys[]    = { "1","2","3","4","5","6","7","8","9","0" };
-    static const juce::String majorKeys[] = { "a","s","d","f","g","h","j","k","l",";" };
-    static const juce::String minorKeys[] = { "z","x","c","v","b","n","m",",",".","/"}; // cols 0-9: Eb Bb F C G D A E B F#
-
-    switch (row)
-    {
-        case 0: return cbKeys   [col];
-        case 1: return bassKeys [col];
-        case 2: return majorKeys[col];
-        case 3: return minorKeys[col];
-        default: return {};
-    }
 }

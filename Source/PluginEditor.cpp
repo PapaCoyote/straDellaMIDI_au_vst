@@ -359,6 +359,7 @@ void StraDellaMIDI_pluginAudioProcessorEditor::paint (juce::Graphics& g)
         {
             const bool pressed = (row == pressedRow && col == pressedCol)
                               || keyboardPressedGrid[row][col];
+            const bool hovered = (row == hoveredRow && col == hoveredCol);
             const auto bounds  = buttonBounds (row, col);
 
             // Fill
@@ -370,14 +371,24 @@ void StraDellaMIDI_pluginAudioProcessorEditor::paint (juce::Graphics& g)
                                  : juce::Colours::darkgrey);
             g.drawRoundedRectangle (bounds.reduced (2).toFloat(), 5.0f, 1.0f);
 
-            // Note label inside button
-            // Third row shows the note a major 3rd above the root;
-            // all other rows show the root (column) note name.
+            // Label: show keyboard key by default; show note name on mouseover.
+            // Cols 10–11 (Db/Ab) have no key assignment → always show note name.
             g.setColour (juce::Colours::black);
-            g.setFont (noteFont);
-            const juce::String label = (row == Proc::COUNTERBASS)
-                                       ? Proc::getThirdNoteName (col)
-                                       : Proc::getColumnName (col);
+            const juce::String keyChar = StradellaKeyboardMapper::getKeyLabel (row, col);
+            juce::String label;
+            if (!hovered && keyChar.isNotEmpty())
+            {
+                // Normal state: keyboard key character
+                g.setFont (juce::Font (juce::FontOptions (13.0f, juce::Font::bold)));
+                label = keyChar;
+            }
+            else
+            {
+                // Hover (or unmapped col): note / chord name
+                g.setFont (noteFont);
+                label = (row == Proc::COUNTERBASS) ? Proc::getThirdNoteName (col)
+                                                   : Proc::getColumnName (col);
+            }
             g.drawFittedText (label, bounds.reduced (3),
                               juce::Justification::centred, 1);
         }
@@ -508,4 +519,26 @@ bool StraDellaMIDI_pluginAudioProcessorEditor::keyStateChanged (bool isKeyDown)
         return true;
     }
     return false;
+}
+
+//==============================================================================
+void StraDellaMIDI_pluginAudioProcessorEditor::mouseMove (const juce::MouseEvent& e)
+{
+    int row, col;
+    hitTest (e.getPosition(), row, col);
+    if (row != hoveredRow || col != hoveredCol)
+    {
+        hoveredRow = row;
+        hoveredCol = col;
+        repaint();
+    }
+}
+
+void StraDellaMIDI_pluginAudioProcessorEditor::mouseExit (const juce::MouseEvent&)
+{
+    if (hoveredRow >= 0 || hoveredCol >= 0)
+    {
+        hoveredRow = hoveredCol = -1;
+        repaint();
+    }
 }

@@ -12,10 +12,22 @@
 #   TOPIC:  <topic title>
 #   TEXT:   <one line of explanatory text>
 #   TEXT:   <additional lines as needed>
-#   SCORE:  <rowname:colname pairs separated by spaces>
+#   SCORE:  <keyboard characters that map to accordion buttons>
 #
-#   rowname : third | bass | major | minor
-#   colname : Eb Bb F C G D A E B F# Db Ab
+#   Each SCORE character is the computer key used to play that note/chord.
+#     -  (dash) inserts a visible gap between note groups
+#     |  (pipe) starts a new score display line
+#   Example: SCORE: rf-tg   means (C bass, C chord) then (G bass, G chord)
+#
+#   Keyboard layout (10 of 12 circle-of-fifths positions: Eb-F#):
+#     Counterbass (row 0): 1 2 3 4 5 6 7 8 9 0
+#     Bass        (row 1): q w e r t y u i o p
+#     Major       (row 2): a s d f g h j k l ;
+#     Minor       (row 3): z x c v b n m , . /
+#
+#   The legacy colon format is still accepted for backward compatibility:
+#     SCORE: bass:C major:G minor:A bass:F
+#     (rowname: third|bass|major|minor  colname: Eb Bb F C G D A E B F# Db Ab)
 #
 # Multiple LESSON blocks may appear in one file.
 # Lines beginning with # are ignored.
@@ -26,20 +38,20 @@ DESCRIPTION: An introduction to the Stradella bass system
 
 TOPIC: Welcome
 TEXT: Welcome to straDellaMIDI lessons!
-TEXT: The Stradella bass system is used on the left hand of the accordion.
-TEXT: You will learn bass notes, major chords, and minor chords.
+TEXT: Each button shows its keyboard key. Hover over it to reveal the note name.
 TEXT: Press the triangle (>) to hear a sequence, then play it yourself!
-SCORE: bass:C bass:G bass:F bass:C
+TEXT: When you play a note correctly its name is revealed; complete the score to keep them.
+SCORE: rter
 
 TOPIC: The Bass Row
 TEXT: The bass row plays the root note of each key.
 TEXT: Keyboard mapping (bass row):
 TEXT:   q=Eb  w=Bb  e=F  r=C  t=G  y=D  u=A  i=E  o=B  p=F#
-SCORE: bass:Eb bass:Bb bass:F bass:C
+SCORE: qwer
 
 TOPIC: More Bass Notes
 TEXT: Continue across the circle of fifths.
-SCORE: bass:G bass:D bass:A bass:E bass:B
+SCORE: tyuio
 
 # ============================================================
 
@@ -50,12 +62,12 @@ TOPIC: Introduction to Major Chords
 TEXT: The orange row plays a major triad: root, major 3rd, and perfect 5th.
 TEXT: Keyboard mapping (major row):
 TEXT:   a=Eb  s=Bb  d=F  f=C  g=G  h=D  j=A  k=E  l=B  ;=F#
-SCORE: major:C major:G major:F major:C
+SCORE: fgdf
 
 TOPIC: I-IV-V in C major
 TEXT: C, F, and G major are the I, IV, and V chords in the key of C.
 TEXT: This three-chord progression underlies countless songs!
-SCORE: major:C major:F major:G major:C
+SCORE: fdgf
 
 # ============================================================
 
@@ -66,12 +78,12 @@ TOPIC: Introduction to Minor Chords
 TEXT: The blue row plays a minor triad: root, minor 3rd, and perfect 5th.
 TEXT: Keyboard mapping (minor row):
 TEXT:   z=Eb  x=Bb  c=F  v=C  b=G  n=D  m=A  ,=E  .=B  /=F#
-SCORE: minor:A minor:D minor:E minor:A
+SCORE: mn,m
 
 TOPIC: Am-Dm-Em Progression
 TEXT: A minor, D minor, and E minor are common in the key of A minor.
 TEXT: This sad-sounding progression appears in many folk and pop songs.
-SCORE: minor:A minor:D minor:E minor:A
+SCORE: mn,m
 
 # ============================================================
 
@@ -81,13 +93,14 @@ DESCRIPTION: Combining bass notes with chords for a full accompaniment
 TOPIC: Bass then Chord
 TEXT: A common accordion pattern alternates a bass note with a chord.
 TEXT: Try: C bass, C major, G bass, G major.
-SCORE: bass:C major:C bass:G major:G
+SCORE: rf-tg
 
 TOPIC: Simple Waltz Pattern
 TEXT: In 3/4 time the left hand plays: bass note, chord, chord.
 TEXT: Here is one bar of a C major waltz, then one bar of G major.
-SCORE: bass:C major:C major:C bass:G major:G major:G
+SCORE: rff-tgg
 
 TOPIC: Full I-IV-V Accompaniment
 TEXT: Now mix bass notes and chords for a complete I-IV-V progression.
-SCORE: bass:C major:C bass:F major:F bass:G major:G bass:C major:C
+TEXT: The dash (-) separates beat groups; the pipe (|) separates bars.
+SCORE: rf-ed|tg-rf

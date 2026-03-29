@@ -38,6 +38,8 @@ public:
 
     void mouseDown (const juce::MouseEvent&) override;
     void mouseUp   (const juce::MouseEvent&) override;
+    void mouseMove (const juce::MouseEvent&) override;
+    void mouseExit (const juce::MouseEvent&) override;
 
     bool keyPressed      (const juce::KeyPress&) override;
     bool keyStateChanged (bool isKeyDown)        override;
@@ -60,6 +62,10 @@ private:
     // Track which button (if any) is currently held by the mouse.
     int pressedRow { -1 };
     int pressedCol { -1 };
+
+    // Accordion grid cell the mouse is currently hovering over (-1 when outside grid).
+    int hoveredRow { -1 };
+    int hoveredCol { -1 };
 
     // Keyboard input: maps computer key codes to their active grid cell.
     StradellaKeyboardMapper keyboardMapper;

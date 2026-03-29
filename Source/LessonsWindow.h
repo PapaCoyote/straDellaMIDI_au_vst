@@ -17,11 +17,23 @@
         TOPIC: Topic title
         TEXT: A line of explanatory text
         TEXT: Another line
-        SCORE: bass:C major:G minor:A bass:F
+        SCORE: rftf-rftf|tgyg-tgyg
 
-    where SCORE tokens are  rowname:colname  pairs, e.g.
-        rowname : third | bass | major | minor
-        colname : Eb | Bb | F | C | G | D | A | E | B | F# | Db | Ab
+    where SCORE is a string of keyboard key characters (same keys used to play the
+    accordion buttons), with:
+        - (dash)  inserting a visible gap between note groups
+        | (pipe)  starting a new score line
+
+    The keyboard layout is:
+        Counterbass: 1 2 3 4 5 6 7 8 9 0   (cols 0-9: Eb Bb F C G D A E B F#)
+        Bass:        q w e r t y u i o p
+        Major:       a s d f g h j k l ;
+        Minor:       z x c v b n m , . /
+
+    A legacy colon format is also accepted for backward compatibility:
+        SCORE: bass:C major:G minor:A bass:F
+    where rowname : third | bass | major | minor
+          colname : Eb Bb F C G D A E B F# Db Ab
 
   ==============================================================================
 */
@@ -32,7 +44,12 @@
 #include "PluginProcessor.h"
 
 //==============================================================================
-/** A single note in a scored exercise (row 0-3, col 0-11 of the Stradella grid). */
+/** A single note (or layout sentinel) in a scored exercise.
+    Real notes have row 0–3 and col 0–11.
+    Sentinels carry layout information only and are not played:
+      row == -2  →  group-space (rendered as a visual gap between note groups)
+      row == -3  →  line-break  (score continues on a new display line)
+*/
 struct LessonScoreNote
 {
     int row { -1 };
@@ -42,6 +59,13 @@ struct LessonScoreNote
     {
         return row == o.row && col == o.col;
     }
+
+    /** True for a playable note (row 0–3). */
+    bool isNote      () const noexcept { return row >= 0; }
+    /** True for a group-space sentinel (dash in SCORE markup). */
+    bool isSpace     () const noexcept { return row == -2; }
+    /** True for a line-break sentinel (pipe in SCORE markup). */
+    bool isLineBreak () const noexcept { return row == -3; }
 };
 
 //==============================================================================
@@ -114,7 +138,6 @@ private:
     void advanceTopic      ();
 
     static juce::Array<LessonData> parseLessons (const juce::String& text);
-    static juce::String            getKeyChar   (int row, int col);
 
     //==========================================================================
     StraDellaMIDI_pluginAudioProcessor& audioProcessor;
