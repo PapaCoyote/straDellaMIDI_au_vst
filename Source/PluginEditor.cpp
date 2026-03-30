@@ -69,6 +69,7 @@ StraDellaMIDI_pluginAudioProcessorEditor::StraDellaMIDI_pluginAudioProcessorEdit
             aboutButton     .setInterceptsMouseClicks (false, false);
             mappingButton   .setInterceptsMouseClicks (false, false);
             expressionButton.setInterceptsMouseClicks (false, false);
+            lessonsButton   .setInterceptsMouseClicks (false, false);
 
             // Expand window to fill the primary display so mouse events are
             // captured from anywhere on screen.  The area outside the original
@@ -88,6 +89,7 @@ StraDellaMIDI_pluginAudioProcessorEditor::StraDellaMIDI_pluginAudioProcessorEdit
             aboutButton     .setInterceptsMouseClicks (true, true);
             mappingButton   .setInterceptsMouseClicks (true, true);
             expressionButton.setInterceptsMouseClicks (true, true);
+            lessonsButton   .setInterceptsMouseClicks (true, true);
 
             // Restore original plugin size.
             setOpaque (true);
@@ -97,6 +99,21 @@ StraDellaMIDI_pluginAudioProcessorEditor::StraDellaMIDI_pluginAudioProcessorEdit
         }
     };
     addAndMakeVisible (focusButton);
+
+    // ── Lessons button ────────────────────────────────────────────────────────
+    lessonsButton.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff2a4a7e));
+    lessonsButton.onClick = [this]
+    {
+        juce::DialogWindow::LaunchOptions opts;
+        opts.content.setOwned (new LessonsWindow (audioProcessor));
+        opts.dialogTitle                  = "Lessons";
+        opts.dialogBackgroundColour       = juce::Colour (0xff1a1a2e);
+        opts.escapeKeyTriggersCloseButton = true;
+        opts.useNativeTitleBar            = false;
+        opts.resizable                    = false;
+        opts.launchAsync();
+    };
+    addAndMakeVisible (lessonsButton);
 
     // ── Panic button ("!") ───────────────────────────────────────────────────
     panicButton.setColour (juce::TextButton::buttonColourId,  juce::Colour (0xffcc2222));
@@ -307,12 +324,12 @@ void StraDellaMIDI_pluginAudioProcessorEditor::paint (juce::Graphics& g)
                           juce::Justification::centred, 1);
     }
 
-    const juce::Font labelFont (juce::FontOptions (12.0f, juce::Font::bold));
-    const juce::Font noteFont  (juce::FontOptions (11.0f));
+    const juce::Font rowLabelFont (juce::FontOptions (13.0f, juce::Font::bold));
+    const juce::Font noteFont     (juce::FontOptions (14.0f, juce::Font::bold));
 
     // ── Column headers (note names, aligned with row 0) ──────────────────────
     g.setColour (juce::Colours::lightgrey);
-    g.setFont (labelFont);
+    g.setFont (rowLabelFont);
     for (int col = 0; col < Proc::NUM_COLUMNS; ++col)
     {
         const int x = kLabelW + col * kBtnW;   // row-0 offset = 0
@@ -329,7 +346,7 @@ void StraDellaMIDI_pluginAudioProcessorEditor::paint (juce::Graphics& g)
         g.fillRect (0, y, kLabelW - 2, kBtnH - 1);
 
         g.setColour (juce::Colours::black);
-        g.setFont (labelFont);
+        g.setFont (rowLabelFont);
         g.drawFittedText (Proc::getRowName (row),
                           2, y, kLabelW - 4, kBtnH,
                           juce::Justification::centredLeft, 2);
@@ -342,6 +359,7 @@ void StraDellaMIDI_pluginAudioProcessorEditor::paint (juce::Graphics& g)
         {
             const bool pressed = (row == pressedRow && col == pressedCol)
                               || keyboardPressedGrid[row][col];
+            const bool hovered = (row == hoveredRow && col == hoveredCol);
             const auto bounds  = buttonBounds (row, col);
 
             // Fill
@@ -353,14 +371,25 @@ void StraDellaMIDI_pluginAudioProcessorEditor::paint (juce::Graphics& g)
                                  : juce::Colours::darkgrey);
             g.drawRoundedRectangle (bounds.reduced (2).toFloat(), 5.0f, 1.0f);
 
-            // Note label inside button
-            // Third row shows the note a major 3rd above the root;
-            // all other rows show the root (column) note name.
-            g.setColour (juce::Colours::black);
-            g.setFont (noteFont);
-            const juce::String label = (row == Proc::COUNTERBASS)
-                                       ? Proc::getThirdNoteName (col)
-                                       : Proc::getColumnName (col);
+            // Label: show keyboard key by default; show note name on mouseover.
+            // Cols 10–11 (Db/Ab) have no key assignment → always show note name.
+            // Use near-black for maximum contrast against all row colours.
+            g.setColour (juce::Colour (0xff111111));
+            const juce::String keyChar = StradellaKeyboardMapper::getKeyLabel (row, col);
+            juce::String label;
+            if (!hovered && keyChar.isNotEmpty())
+            {
+                // Normal state: keyboard key character — large and bold
+                g.setFont (juce::Font (juce::FontOptions (16.0f, juce::Font::bold)));
+                label = keyChar;
+            }
+            else
+            {
+                // Hover (or unmapped col): note / chord name — bold for readability
+                g.setFont (noteFont);
+                label = (row == Proc::COUNTERBASS) ? Proc::getThirdNoteName (col)
+                                                   : Proc::getColumnName (col);
+            }
             g.drawFittedText (label, bounds.reduced (3),
                               juce::Justification::centred, 1);
         }
@@ -381,8 +410,9 @@ void StraDellaMIDI_pluginAudioProcessorEditor::resized()
     // Top-row buttons sit inside the title area.
     static constexpr int kTopBtnY = 10;
     static constexpr int kTopBtnH = 36;
-    focusButton.setBounds (5,           kTopBtnY, 100, kTopBtnH);
-    panicButton.setBounds (uiW - 65,    kTopBtnY,  60, kTopBtnH);
+    focusButton  .setBounds (5,           kTopBtnY, 100, kTopBtnH);
+    lessonsButton.setBounds (110,         kTopBtnY, 100, kTopBtnH);
+    panicButton  .setBounds (uiW - 65,    kTopBtnY,  60, kTopBtnH);
 
     aboutButton     .setBounds (2,               btnAreaY, third,     btnH);
     mappingButton   .setBounds (2 + third + 2,   btnAreaY, third,     btnH);
@@ -490,4 +520,26 @@ bool StraDellaMIDI_pluginAudioProcessorEditor::keyStateChanged (bool isKeyDown)
         return true;
     }
     return false;
+}
+
+//==============================================================================
+void StraDellaMIDI_pluginAudioProcessorEditor::mouseMove (const juce::MouseEvent& e)
+{
+    int row, col;
+    hitTest (e.getPosition(), row, col);
+    if (row != hoveredRow || col != hoveredCol)
+    {
+        hoveredRow = row;
+        hoveredCol = col;
+        repaint();
+    }
+}
+
+void StraDellaMIDI_pluginAudioProcessorEditor::mouseExit (const juce::MouseEvent&)
+{
+    if (hoveredRow >= 0 || hoveredCol >= 0)
+    {
+        hoveredRow = hoveredCol = -1;
+        repaint();
+    }
 }

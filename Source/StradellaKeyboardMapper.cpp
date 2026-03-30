@@ -188,6 +188,26 @@ juce::String StradellaKeyboardMapper::getMidiNoteName (int midiNoteNumber)
     return juce::String (noteNames[noteIndex]) + juce::String (octave);
 }
 
+juce::String StradellaKeyboardMapper::getKeyLabel (int row, int col)
+{
+    // Cols 10 (Db) and 11 (Ab) have no key assignment in the default layout.
+    if (col < 0 || col > 9) return {};
+
+    static const juce::String bassKeys[]  = { "q","w","e","r","t","y","u","i","o","p" };
+    static const juce::String cbKeys[]    = { "1","2","3","4","5","6","7","8","9","0" };
+    static const juce::String majorKeys[] = { "a","s","d","f","g","h","j","k","l",";" };
+    static const juce::String minorKeys[] = { "z","x","c","v","b","n","m",",",".","/"};
+
+    switch (row)
+    {
+        case 0: return cbKeys   [col];   // COUNTERBASS
+        case 1: return bassKeys [col];   // BASS
+        case 2: return majorKeys[col];   // MAJOR
+        case 3: return minorKeys[col];   // MINOR
+        default: return {};
+    }
+}
+
 //==============================================================================
 bool StradellaKeyboardMapper::loadConfiguration (const juce::File& configFile)
 {

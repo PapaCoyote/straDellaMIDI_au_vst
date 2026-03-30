@@ -53,6 +53,14 @@ public:
     */
     bool getButtonCoords(int keyCode, int& rowOut, int& colOut) const;
 
+    /**
+        Returns the keyboard key label (single character) for a given plugin grid cell.
+        Uses the default keyboard layout (rows: 1=2=3=4=5=6=7=8=9=0 / q-p / a-; / z-/).
+        Returns an empty string for cells with no keyboard assignment (cols 10–11: Db, Ab).
+        row: 0=COUNTERBASS, 1=BASS, 2=MAJOR, 3=MINOR.  col: 0–11.
+    */
+    static juce::String getKeyLabel (int row, int col);
+
 private:
     struct KeyMapping
     {

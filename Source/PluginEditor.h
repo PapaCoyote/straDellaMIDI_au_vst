@@ -22,6 +22,7 @@
 #include "MouseMidiExpression.h"
 #include "MouseMidiSettingsWindow.h"
 #include "MappingSettingsWindow.h"
+#include "LessonsWindow.h"
 
 //==============================================================================
 class StraDellaMIDI_pluginAudioProcessorEditor  : public juce::AudioProcessorEditor,
@@ -37,6 +38,8 @@ public:
 
     void mouseDown (const juce::MouseEvent&) override;
     void mouseUp   (const juce::MouseEvent&) override;
+    void mouseMove (const juce::MouseEvent&) override;
+    void mouseExit (const juce::MouseEvent&) override;
 
     bool keyPressed      (const juce::KeyPress&) override;
     bool keyStateChanged (bool isKeyDown)        override;
@@ -60,6 +63,10 @@ private:
     int pressedRow { -1 };
     int pressedCol { -1 };
 
+    // Accordion grid cell the mouse is currently hovering over (-1 when outside grid).
+    int hoveredRow { -1 };
+    int hoveredCol { -1 };
+
     // Keyboard input: maps computer key codes to their active grid cell.
     StradellaKeyboardMapper keyboardMapper;
     juce::HashMap<int, int> activeKeyRow;   ///< keyCode → plugin row
@@ -78,8 +85,9 @@ private:
     juce::TextButton expressionButton { "Expression" };
 
     // Top action buttons
-    juce::TextButton focusButton { "Focus" };   ///< toggle – captures keyboard & mouse focus
-    juce::TextButton panicButton { "!" };       ///< sends All Notes Off on all channels
+    juce::TextButton focusButton   { "Focus" };    ///< toggle – captures keyboard & mouse focus
+    juce::TextButton lessonsButton { "Lessons" };  ///< opens the interactive lessons window
+    juce::TextButton panicButton   { "!" };        ///< sends All Notes Off on all channels
     bool             focusActive { false };     ///< mirrors focusButton toggle state
 
     // Original plugin size stored when Focus mode expands the window to fill screen.
