@@ -324,12 +324,12 @@ void StraDellaMIDI_pluginAudioProcessorEditor::paint (juce::Graphics& g)
                           juce::Justification::centred, 1);
     }
 
-    const juce::Font labelFont (juce::FontOptions (12.0f, juce::Font::bold));
-    const juce::Font noteFont  (juce::FontOptions (11.0f));
+    const juce::Font rowLabelFont (juce::FontOptions (13.0f, juce::Font::bold));
+    const juce::Font noteFont     (juce::FontOptions (14.0f, juce::Font::bold));
 
     // ── Column headers (note names, aligned with row 0) ──────────────────────
     g.setColour (juce::Colours::lightgrey);
-    g.setFont (labelFont);
+    g.setFont (rowLabelFont);
     for (int col = 0; col < Proc::NUM_COLUMNS; ++col)
     {
         const int x = kLabelW + col * kBtnW;   // row-0 offset = 0
@@ -346,7 +346,7 @@ void StraDellaMIDI_pluginAudioProcessorEditor::paint (juce::Graphics& g)
         g.fillRect (0, y, kLabelW - 2, kBtnH - 1);
 
         g.setColour (juce::Colours::black);
-        g.setFont (labelFont);
+        g.setFont (rowLabelFont);
         g.drawFittedText (Proc::getRowName (row),
                           2, y, kLabelW - 4, kBtnH,
                           juce::Justification::centredLeft, 2);
@@ -373,18 +373,19 @@ void StraDellaMIDI_pluginAudioProcessorEditor::paint (juce::Graphics& g)
 
             // Label: show keyboard key by default; show note name on mouseover.
             // Cols 10–11 (Db/Ab) have no key assignment → always show note name.
-            g.setColour (juce::Colours::black);
+            // Use near-black for maximum contrast against all row colours.
+            g.setColour (juce::Colour (0xff111111));
             const juce::String keyChar = StradellaKeyboardMapper::getKeyLabel (row, col);
             juce::String label;
             if (!hovered && keyChar.isNotEmpty())
             {
-                // Normal state: keyboard key character
-                g.setFont (juce::Font (juce::FontOptions (13.0f, juce::Font::bold)));
+                // Normal state: keyboard key character — large and bold
+                g.setFont (juce::Font (juce::FontOptions (16.0f, juce::Font::bold)));
                 label = keyChar;
             }
             else
             {
-                // Hover (or unmapped col): note / chord name
+                // Hover (or unmapped col): note / chord name — bold for readability
                 g.setFont (noteFont);
                 label = (row == Proc::COUNTERBASS) ? Proc::getThirdNoteName (col)
                                                    : Proc::getColumnName (col);

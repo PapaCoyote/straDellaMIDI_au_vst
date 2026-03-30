@@ -144,6 +144,8 @@ private:
 
     juce::Label      selectorLabel;
     juce::ComboBox   lessonSelector;
+    juce::TextButton textSmallerButton { "A-" };   ///< shrink lesson text font
+    juce::TextButton textLargerButton  { "A+" };   ///< grow   lesson text font
     // panel must be declared before viewport so that it is destroyed AFTER viewport
     // (members are destroyed in reverse declaration order).
     std::unique_ptr<LessonPanel> panel;
@@ -152,6 +154,9 @@ private:
 
     juce::Array<LessonData> lessons;
     int  currentLessonIdx { -1 };
+
+    // Lesson text font size — adjustable via A+/A- buttons (range 10–20, default 13)
+    float textFontSize { 13.0f };
 
     // User score-matching progress
     int  userTopicIdx { 0 };

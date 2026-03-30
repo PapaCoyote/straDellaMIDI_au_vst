@@ -91,6 +91,14 @@ public:
         repaint();
     }
 
+    /** Sets the lesson text font size and reflows layout. */
+    void setTextFontSize (float sizePt)
+    {
+        textFontSize = sizePt;
+        recalcLayouts();
+        repaint();
+    }
+
     int getPreferredHeight() const noexcept { return preferredHeight; }
 
     int getTopicY (int topicIdx) const noexcept
@@ -133,11 +141,16 @@ public:
     {
         g.fillAll (juce::Colour (0xff1e1e2e));
 
-        const juce::Font titleFont (juce::FontOptions (14.0f, juce::Font::bold));
-        const juce::Font textFont  (juce::FontOptions (12.0f));
-        const juce::Font noteFont  (juce::FontOptions (11.0f, juce::Font::bold));
+        // Title is 2pt larger than the text font; both scale with textFontSize.
+        const juce::Font titleFont (juce::FontOptions (textFontSize + 2.0f, juce::Font::bold));
+        const juce::Font textFont  (juce::FontOptions (textFontSize));
+        const juce::Font noteFont  (juce::FontOptions (14.0f, juce::Font::bold));  // score note-name
         const juce::Font smallFont (juce::FontOptions (9.0f));
-        const juce::Font keyFont   (juce::FontOptions (13.0f, juce::Font::bold));
+        const juce::Font keyFont   (juce::FontOptions (17.0f, juce::Font::bold));  // score key label
+
+        // Compute the same dynamic heights used in recalcLayouts().
+        const int titleH    = juce::jmax (kTopicTitleH, (int)(textFontSize + 16.0f));
+        const int textLineH = juce::jmax (16, (int)(textFontSize + 7.0f));
 
         for (int ti = 0; ti < lesson.topics.size(); ++ti)
         {
@@ -156,7 +169,7 @@ public:
             g.setColour (juce::Colours::white);
             g.setFont (titleFont);
             g.drawText (topic.title,
-                        kMargin, layout.y, getWidth() - 2 * kMargin, kTopicTitleH,
+                        kMargin, layout.y, getWidth() - 2 * kMargin, titleH,
                         juce::Justification::centredLeft);
 
             // ── Text lines ────────────────────────────────────────────────────
@@ -166,8 +179,8 @@ public:
             {
                 g.drawText (topic.textLines[li],
                             kMargin + 4,
-                            layout.y + kTopicTitleH + li * kTextLineH,
-                            getWidth() - 2 * kMargin - 8, kTextLineH,
+                            layout.y + titleH + li * textLineH,
+                            getWidth() - 2 * kMargin - 8, textLineH,
                             juce::Justification::centredLeft);
             }
 
@@ -291,6 +304,7 @@ private:
     //==========================================================================
     LessonData lesson;
     State      state;
+    float      textFontSize { 13.0f };   ///< lesson text font size in points (adjustable)
 
     struct TopicLayout
     {
@@ -308,6 +322,10 @@ private:
         layouts.clear();
         int y = kTopMargin;
 
+        // Dynamic line heights based on current text font size.
+        const int titleH    = juce::jmax (kTopicTitleH, (int)(textFontSize + 16.0f));
+        const int textLineH = juce::jmax (16, (int)(textFontSize + 7.0f));
+
         for (int ti = 0; ti < lesson.topics.size(); ++ti)
         {
             const auto& topic = lesson.topics.getReference (ti);
@@ -316,8 +334,8 @@ private:
             TopicLayout tl;
             tl.y = y;
 
-            y += kTopicTitleH;
-            y += topic.textLines.size() * kTextLineH;
+            y += titleH;
+            y += topic.textLines.size() * textLineH;
 
             tl.scoreY = y;
 
@@ -366,8 +384,8 @@ private:
     static constexpr int kMargin      = 12;
     static constexpr int kTopMargin   = 12;
     static constexpr int kTopicGap    = 28;
-    static constexpr int kTopicTitleH = 28;
-    static constexpr int kTextLineH   = 20;
+    static constexpr int kTopicTitleH = 28;   ///< minimum topic-title row height (scales with textFontSize)
+    static constexpr int kTextLineH   = 20;   ///< minimum text-line height; actual value computed from textFontSize
     static constexpr int kScoreAreaH  = 58;   ///< height of one score display line
     static constexpr int kScoreNoteW  = 50;
     static constexpr int kScoreNoteH  = 40;
@@ -409,6 +427,29 @@ LessonsWindow::LessonsWindow (StraDellaMIDI_pluginAudioProcessor& p)
     viewport.setScrollBarsShown (true, false);   // vertical scroll only
     viewport.setViewedComponent (panel.get(), false);
     addAndMakeVisible (viewport);
+
+    // ── Text-size buttons (A- / A+) ───────────────────────────────────────────
+    textSmallerButton.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff2a3a5e));
+    textSmallerButton.setTooltip ("Decrease text size");
+    textSmallerButton.onClick = [this]
+    {
+        textFontSize = juce::jmax (10.0f, textFontSize - 1.0f);
+        panel->setTextFontSize (textFontSize);
+        const int pw = viewport.getMaximumVisibleWidth();
+        if (pw > 0) panel->setSize (pw, panel->getPreferredHeight());
+    };
+    addAndMakeVisible (textSmallerButton);
+
+    textLargerButton.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff2a3a5e));
+    textLargerButton.setTooltip ("Increase text size");
+    textLargerButton.onClick = [this]
+    {
+        textFontSize = juce::jmin (20.0f, textFontSize + 1.0f);
+        panel->setTextFontSize (textFontSize);
+        const int pw = viewport.getMaximumVisibleWidth();
+        if (pw > 0) panel->setSize (pw, panel->getPreferredHeight());
+    };
+    addAndMakeVisible (textLargerButton);
 
     // ── Close button ──────────────────────────────────────────────────────────
     closeButton.onClick = [this]
@@ -547,10 +588,15 @@ void LessonsWindow::resized()
 {
     auto area = getLocalBounds().reduced (kMargin);
 
-    // Top: label + combo
+    // Top: label + combo + A-/A+ text-size buttons
     auto topRow = area.removeFromTop (kComboH);
     selectorLabel.setBounds (topRow.removeFromLeft (55));
     topRow.removeFromLeft (4);
+    // A-/A+ buttons sit on the right of the top row
+    textLargerButton .setBounds (topRow.removeFromRight (32));
+    topRow.removeFromRight (2);
+    textSmallerButton.setBounds (topRow.removeFromRight (32));
+    topRow.removeFromRight (4);
     lessonSelector.setBounds (topRow);
     area.removeFromTop (8);
 
